@@ -15,7 +15,10 @@ export const metadata: Metadata = {
   description:
     "Professional, SEO-friendly website for Yugasa Builders. Showcasing projects, services, and brand vision with modern animations.",
   keywords: ["Yugasa Builders", "construction", "redevelopment", "real estate", "builders", "infrastructure"],
-  generator: "v0.app",
+  icons: {
+    icon: "/yugasa-logo.jpg",
+  },
+  // generator: "v0.app",
 }
 
 export default function RootLayout({
