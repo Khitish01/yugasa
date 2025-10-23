@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
+import { useRouter } from "next/navigation";
 
 const newsItems = [
   {
@@ -35,6 +36,7 @@ const newsItems = [
 ]
 
 export default function NewsSection() {
+  const router = useRouter();
   return (
     <section className="py-16 section-dark">
       <div className="container mx-auto px-4">
@@ -57,27 +59,28 @@ export default function NewsSection() {
           {newsItems.map((item, index) => (
             <motion.div
               key={item.id}
+              onClick={() => router.push(`/news`)}
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="flex items-start gap-6 py-6 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors duration-300 px-4"
+              className="flex items-start gap-6 py-6 border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors duration-300 px-4 rounded-lg"
             >
-              <Badge 
+              <Badge
                 className="bg-primary text-white px-4 py-2 rounded-full text-sm font-medium min-w-fit"
               >
                 {item.category}
               </Badge>
-              
+
               <div className="flex-1">
-                <div className=" text-sm font-medium mb-2">
+                <div className="text-white/70 text-sm font-medium mb-2">
                   {new Date(item.date).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit'
                   })}
                 </div>
-                <h3 className="text-lg font-medium  leading-relaxed hover:text-primary transition-colors cursor-pointer">
+                <h3 className="text-lg font-medium text-white leading-relaxed transition-colors cursor-pointer">
                   {item.title}
                 </h3>
               </div>
@@ -92,7 +95,7 @@ export default function NewsSection() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="text-center mt-12"
         >
-          <button className="bg-primary text-white px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium">
+          <button className="bg-primary text-white px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium" onClick={() => router.push('/news')}>
             View All Updates
           </button>
         </motion.div>

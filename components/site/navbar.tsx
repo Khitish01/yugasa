@@ -43,55 +43,71 @@ export function SiteNav() {
         <Logo />
 
         <div className="flex items-center gap-8">
-          {mainNavLinks.map((l) => (
-            <motion.div
-              key={l.href}
-              className="relative group cursor-pointer py-2"
-              onClick={() => router.push(l.href)}
-              whileHover={{
-                y: -2,
-                transition: { duration: 0.2, ease: "easeOut" }
-              }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="text-sm font-medium text-gray-600 group-hover:text-primary transition-colors duration-200 tracking-wide">
-                {l.label}
-              </span>
+          {/* Desktop Menu */}
+          <div className="hidden lg:flex items-center gap-8">
+            {mainNavLinks.map((l) => (
               <motion.div
-                className="absolute bottom-0 left-0 h-0.5"
-                style={{ backgroundColor: '#122640' }}
-                initial={{ width: 0 }}
+                key={l.href}
+                className="relative group cursor-pointer py-2"
+                onClick={() => router.push(l.href)}
                 whileHover={{
-                  width: "100%",
-                  transition: { duration: 0.3, ease: "easeOut" }
+                  y: -2,
+                  transition: { duration: 0.2, ease: "easeOut" }
                 }}
-              />
-            </motion.div>
-          ))}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="text-sm font-medium text-gray-600 group-hover:text-primary transition-colors duration-200 tracking-wide">
+                  {l.label}
+                </span>
+                <motion.div
+                  className="absolute bottom-0 left-0 h-0.5"
+                  style={{ backgroundColor: '#122640' }}
+                  initial={{ width: 0 }}
+                  whileHover={{
+                    width: "100%",
+                    transition: { duration: 0.3, ease: "easeOut" }
+                  }}
+                />
+              </motion.div>
+            ))}
 
-          <button className="bg-gray-900 text-white px-8 py-4 hover:bg-gray-800 transition-colors flex text-sm items-center gap-2 cursor-pointer" onClick={() => router.push('/contact')}>
-            CONTACT US
-            <span>→</span>
-          </button>
-          {/* <Button
+            <button className="bg-gray-900 text-white px-8 py-4 hover:bg-gray-800 transition-colors flex text-sm items-center gap-2 cursor-pointer" onClick={() => router.push('/contact')}>
+              CONTACT US
+              <span>→</span>
+            </button>
+          </div>
+
+          {/* Mobile Hamburger */}
+          <Button
             variant="ghost"
             size="sm"
             onClick={() => setDrawerOpen(true)}
-            className="p-2"
+            className="lg:hidden p-2"
           >
             <Menu className="w-6 h-6" />
-          </Button> */}
+          </Button>
         </div>
       </div>
 
       {/* Right Drawer */}
       {drawerOpen && (
         <>
-          <div
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
             className="fixed inset-0 bg-black/50 z-9998"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="fixed top-0 right-0 h-full w-80 shadow-xl z-9999 border-l" style={{ backgroundColor: '#ffffff' }}>
+          <motion.div 
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="fixed top-0 right-0 h-full w-80 shadow-xl z-9999 border-l" 
+            style={{ backgroundColor: '#ffffff' }}
+          >
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-semibold">Menu</h2>
@@ -105,6 +121,41 @@ export function SiteNav() {
               </div>
 
               <div className="space-y-3">
+                {/* Main Navigation Links */}
+                {mainNavLinks.map((l) => (
+                  <motion.div
+                    key={l.href}
+                    onClick={() => {
+                      setDrawerOpen(false)
+                      router.push(l.href)
+                    }}
+                    className="relative group cursor-pointer py-2"
+                    whileHover={{
+                      x: 8,
+                      transition: { duration: 0.2, ease: "easeOut" }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="block text-gray-700 group-hover:text-primary font-medium transition-colors duration-200">
+                      {l.label}
+                    </span>
+                    <motion.div
+                      className="absolute bottom-0 left-0 h-0.5"
+                      style={{ backgroundColor: '#122640' }}
+                      initial={{ width: 0 }}
+                      whileHover={{
+                        width: "100%",
+                        transition: { duration: 0.3, ease: "easeOut" }
+                      }}
+                    />
+                  </motion.div>
+                ))}
+                <button className="bg-gray-900 text-white px-8 py-4 hover:bg-gray-800 transition-colors flex text-sm items-center gap-2 cursor-pointer" onClick={() => router.push('/contact')}>
+                  CONTACT US
+                  <span>→</span>
+                </button>
+                {/* <div className="border-t border-gray-200 my-4"></div>
+                
                 {drawerLinks.map((l) => (
                   <motion.div
                     key={l.href}
@@ -132,10 +183,10 @@ export function SiteNav() {
                       }}
                     />
                   </motion.div>
-                ))}
+                ))} */}
               </div>
 
-              <div className="mt-8 space-y-3">
+              {/* <div className="mt-8 space-y-3">
                 <Button asChild className="w-full">
                   <Link href="/contact" onClick={() => setDrawerOpen(false)}>
                     Enquire Now
@@ -146,9 +197,9 @@ export function SiteNav() {
                     Book Meeting
                   </Link>
                 </Button>
-              </div>
+              </div> */}
             </div>
-          </div>
+          </motion.div>
         </>
       )}
     </nav>
