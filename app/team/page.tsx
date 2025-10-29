@@ -1,9 +1,13 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { SectionPage } from "@/components/site/section-page"
 import { SectionHero } from "@/components/site/section-hero"
 import { Reveal } from "@/components/site/reveal"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Linkedin, Mail } from "lucide-react"
+import { getContent } from "@/lib/admin"
 
 const leadership = [
   {
@@ -81,13 +85,81 @@ const team = [
 ]
 
 export default function TeamPage() {
+  const [heroBackground, setHeroBackground] = useState("/team-meeting-architecture-studio.jpg")
+  const [leadershipData, setLeadershipData] = useState(leadership)
+  const [teamData, setTeamData] = useState(team)
+
+
+  useEffect(() => {
+    const loadTeamData = async () => {
+      // Load hero background
+      try {
+        const response = await fetch('/api/data?key=team-hero-bg')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.data) {
+            setHeroBackground(result.data)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load hero background:', e)
+      }
+
+      // Load leadership data
+      try {
+        const leadershipResponse = await fetch('/api/data?key=leadership-team')
+        if (leadershipResponse.ok) {
+          const leadershipResult = await leadershipResponse.json()
+          if (leadershipResult.data && Array.isArray(leadershipResult.data)) {
+            setLeadershipData(leadershipResult.data)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load leadership data:', e)
+      }
+
+      // Load team data
+      try {
+        const teamResponse = await fetch('/api/data?key=team-members')
+        if (teamResponse.ok) {
+          const teamResult = await teamResponse.json()
+          if (teamResult.data && Array.isArray(teamResult.data)) {
+            setTeamData(teamResult.data)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load team data:', e)
+      }
+
+
+    }
+
+    loadTeamData()
+
+    const handleStorageChange = () => {
+      loadTeamData()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('teamHeroUpdated', handleStorageChange)
+    window.addEventListener('leadershipUpdated', handleStorageChange)
+    window.addEventListener('teamUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('teamHeroUpdated', handleStorageChange)
+      window.removeEventListener('leadershipUpdated', handleStorageChange)
+      window.removeEventListener('teamUpdated', handleStorageChange)
+    }
+  }, [])
+
   return (
     <>
       <SectionHero
         eyebrow="Our Team"
         title="Meet Our Team"
         subtitle="The passionate professionals behind every successful Yugasa project."
-        imageSrc="/team-meeting-architecture-studio.jpg"
+        imageSrc={heroBackground}
       />
       
       <SectionPage
@@ -96,7 +168,7 @@ export default function TeamPage() {
       >
         <Reveal>
           <div className="grid gap-8 lg:grid-cols-3 mb-16">
-            {leadership.map((leader) => (
+            {leadershipData.map((leader) => (
               <Card key={leader.name} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
                 <div className="aspect-[4/5] overflow-hidden">
                   <img 
@@ -108,32 +180,24 @@ export default function TeamPage() {
                 <CardContent className="p-6">
                   <div className="mb-4">
                     <h3 className="text-xl font-semibold mb-1">{leader.name}</h3>
-                    <p className="text-primary font-medium mb-2">{leader.role}</p>
-                    <Badge variant="secondary">{leader.experience}</Badge>
+                    <p className="text-primary font-medium mb-2">{leader.position}</p>
                   </div>
                   
                   <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                     {leader.bio}
                   </p>
                   
-                  <div className="space-y-2 mb-4">
-                    <div>
-                      <span className="text-sm font-medium">Specialization: </span>
-                      <span className="text-sm text-muted-foreground">{leader.specialization}</span>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium">Education: </span>
-                      <span className="text-sm text-muted-foreground">{leader.education}</span>
-                    </div>
-                  </div>
-                  
                   <div className="flex gap-2">
-                    <button className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                      <Linkedin className="w-4 h-4" />
-                    </button>
-                    <button className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                      <Mail className="w-4 h-4" />
-                    </button>
+                    {leader.linkedin && (
+                      <a href={leader.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
+                        <Linkedin className="w-4 h-4" />
+                      </a>
+                    )}
+                    {leader.email && (
+                      <a href={`mailto:${leader.email}`} className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
+                        <Mail className="w-4 h-4" />
+                      </a>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -149,7 +213,7 @@ export default function TeamPage() {
             </p>
             
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {team.map((member) => (
+              {teamData.map((member) => (
                 <Card key={member.name} className="hover:shadow-md transition-shadow duration-300">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4 mb-4">
@@ -160,20 +224,24 @@ export default function TeamPage() {
                       />
                       <div>
                         <h3 className="font-semibold">{member.name}</h3>
-                        <p className="text-sm text-primary">{member.role}</p>
+                        <p className="text-sm text-primary">{member.position}</p>
                         <p className="text-xs text-muted-foreground">{member.department}</p>
                       </div>
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <Badge variant="outline">{member.experience}</Badge>
+                      <Badge variant="outline">Team Member</Badge>
                       <div className="flex gap-1">
-                        <button className="p-1.5 rounded bg-muted hover:bg-muted/80 transition-colors">
-                          <Linkedin className="w-3 h-3" />
-                        </button>
-                        <button className="p-1.5 rounded bg-muted hover:bg-muted/80 transition-colors">
-                          <Mail className="w-3 h-3" />
-                        </button>
+                        {member.linkedin && (
+                          <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-muted hover:bg-muted/80 transition-colors">
+                            <Linkedin className="w-3 h-3" />
+                          </a>
+                        )}
+                        {member.email && (
+                          <a href={`mailto:${member.email}`} className="p-1.5 rounded bg-muted hover:bg-muted/80 transition-colors">
+                            <Mail className="w-3 h-3" />
+                          </a>
+                        )}
                       </div>
                     </div>
                   </CardContent>

@@ -3,32 +3,64 @@
 import { motion } from "framer-motion"
 import { Star, Quote } from "lucide-react"
 import { FloatingParticles } from "@/components/ui/floating-particles"
-
-const testimonials = [
-  {
-    name: "Rajesh Sharma",
-    role: "Homeowner",
-    content: "Yugasa Builders transformed our vision into reality. The attention to detail and quality of construction exceeded our expectations. Our dream home was delivered on time and within budget.",
-    rating: 5,
-    image: "/placeholder-user.jpg"
-  },
-  {
-    name: "Priya Patel",
-    role: "Property Developer",
-    content: "Working with Yugasa has been exceptional. Their project management skills and commitment to quality make them our preferred construction partner for all residential developments.",
-    rating: 5,
-    image: "/placeholder-user.jpg"
-  },
-  {
-    name: "Amit Kumar",
-    role: "Business Owner",
-    content: "The commercial space Yugasa built for us perfectly balances functionality and aesthetics. Their team understood our business needs and delivered a space that enhances our operations.",
-    rating: 5,
-    image: "/placeholder-user.jpg"
-  }
-]
+import { useState, useEffect } from "react"
+import { loadTestimonials } from "@/lib/data-utils"
 
 export default function TestimonialsSection() {
+  const [testimonials, setTestimonials] = useState([
+    {
+      name: "Rajesh Sharma",
+      role: "Homeowner",
+      content: "Yugasa Builders transformed our vision into reality. The attention to detail and quality of construction exceeded our expectations. Our dream home was delivered on time and within budget.",
+      rating: 5,
+      image: "/placeholder-user.jpg"
+    },
+    {
+      name: "Priya Patel",
+      role: "Property Developer", 
+      content: "Working with Yugasa has been exceptional. Their project management skills and commitment to quality make them our preferred construction partner for all residential developments.",
+      rating: 5,
+      image: "/placeholder-user.jpg"
+    },
+    {
+      name: "Amit Kumar",
+      role: "Business Owner",
+      content: "The commercial space Yugasa built for us perfectly balances functionality and aesthetics. Their team understood our business needs and delivered a space that enhances our operations.",
+      rating: 5,
+      image: "/placeholder-user.jpg"
+    }
+  ])
+
+  useEffect(() => {
+    const loadTestimonialsData = async () => {
+      try {
+        const testimonialsData = await loadTestimonials()
+        console.log('Loaded testimonials:', testimonialsData)
+        if (testimonialsData && testimonialsData.length > 0) {
+          setTestimonials(testimonialsData)
+        }
+      } catch (e) {
+        console.error('Failed to load testimonials:', e)
+      }
+    }
+
+    loadTestimonialsData()
+
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      loadTestimonialsData()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Also listen for custom events for same-tab updates
+    window.addEventListener('testimonialsUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('testimonialsUpdated', handleStorageChange)
+    }
+  }, [])
   return (
     <section className="relative py-16 md:py-24 bg-background overflow-hidden">
       <FloatingParticles count={10} />
@@ -50,7 +82,7 @@ export default function TestimonialsSection() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((testimonial, index) => (
             <motion.div
-              key={testimonial.name}
+              key={testimonial.id || testimonial.name || index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
@@ -60,7 +92,7 @@ export default function TestimonialsSection() {
               <Quote className="w-8 h-8 text-primary/20 mb-4" />
               
               <div className="flex mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
+                {[...Array(testimonial.rating || 5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 ))}
               </div>

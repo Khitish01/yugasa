@@ -1,11 +1,8 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Playfair_Display, Inter } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
-import { SiteNav } from "@/components/site/navbar"
-import { SiteFooter } from "@/components/site/footer"
-import { FloatingActions } from "@/components/site/floating-actions"
+import { ConditionalLayout } from "@/components/conditional-layout"
 
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
@@ -29,11 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${playfair.variable} ${inter.variable} font-sans antialiased`}>
-        <SiteNav />
-        <main>{children}</main>
-        <SiteFooter />
-        <FloatingActions />
-        <Analytics />
+        <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>
   )

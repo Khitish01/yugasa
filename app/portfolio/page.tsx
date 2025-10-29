@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { SectionHero } from "@/components/site/section-hero"
 import { SectionPage } from "@/components/site/section-page"
 import MarketsGrid from "@/components/site/markets-grid"
@@ -9,92 +9,66 @@ import PropertySlider from "@/components/site/property-slider"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Calendar, Users, Building } from "lucide-react"
+import { loadPortfolio } from "@/lib/data-utils"
+import { getContent } from "@/lib/admin"
+import { portfolioProjects } from "@/lib/portfolio-data"
+import { useRouter } from "next/navigation"
 
-const portfolioProjects = [
-  {
-    title: "Serenity Heights",
-    category: "Residential",
-    location: "Bandra West, Mumbai",
-    year: "2023",
-    status: "Completed",
-    units: "120 Apartments",
-    image: "/modern-luxury-residence-exterior.jpg",
-    description: "Premium residential complex with modern amenities and sustainable design features.",
-    featured: true,
-    meta: "3BHK · 2200 sqft · South City"
-  },
-  {
-    title: "The Grove Villas",
-    category: "Luxury Villas",
-    location: "Juhu, Mumbai", 
-    year: "2023",
-    status: "Completed",
-    units: "12 Villas",
-    image: "/luxury-villa-pool.png",
-    description: "Exclusive beachfront villas with panoramic ocean views and private pools.",
-    featured: true,
-    meta: "Premium Villas · 4500 sqft"
-  },
-  {
-    title: "Ocean View Villas",
-    category: "Luxury Villas",
-    location: "Juhu, Mumbai", 
-    year: "2023",
-    status: "Completed",
-    units: "12 Villas",
-    image: "/coastal-villa-architecture.jpg",
-    description: "Exclusive beachfront villas with panoramic ocean views and private pools."
-  },
-  {
-    title: "Tech Park Plaza",
-    category: "Commercial",
-    location: "BKC, Mumbai",
-    year: "2022", 
-    status: "Completed",
-    units: "50,000 sq ft",
-    image: "/commercial-building-glass.jpg",
-    description: "State-of-the-art commercial complex with modern office spaces and amenities."
-  },
-  {
-    title: "Urban Vista Redevelopment",
-    category: "Redevelopment",
-    location: "Central Mumbai",
-    year: "2024",
-    status: "Ongoing",
-    units: "200 Units",
-    image: "/urban-redevelopment-aerial-construction.jpg",
-    description: "Complete redevelopment of old residential society into modern mixed-use complex."
-  },
-  {
-    title: "Green Meadows",
-    category: "Residential",
-    location: "Thane",
-    year: "2024",
-    status: "Ongoing", 
-    units: "80 Apartments",
-    image: "/modern-residential-interior.jpg",
-    description: "Eco-friendly residential project with green building certification and sustainable features."
-  },
-  {
-    title: "Heritage Restoration",
-    category: "Heritage",
-    location: "Fort, Mumbai",
-    year: "2024",
-    status: "Ongoing",
-    units: "Heritage Building",
-    image: "/architectural-details-monochrome.jpg",
-    description: "Careful restoration of heritage building maintaining original architecture with modern amenities."
-  }
-]
 
 export default function PortfolioPage() {
+  const router = useRouter()
+  const [heroImageSrc, setHeroImageSrc] = useState<string | null>(null)
+  const [projects, setProjects] = useState(portfolioProjects)
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [selectedStatus, setSelectedStatus] = useState("All")
   
   const categories = ["All", "Residential", "Commercial", "Luxury Villas", "Redevelopment", "Heritage"]
   const statuses = ["All", "Completed", "Ongoing"]
   
-  const filteredProjects = portfolioProjects.filter(project => {
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        // Load hero background
+        const response = await fetch('/api/data?key=portfolio-hero-bg')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.data) {
+            setHeroImageSrc(result.data)
+          } else {
+            setHeroImageSrc("/construction-site-luxury-lobby.jpg")
+          }
+        } else {
+          setHeroImageSrc("/construction-site-luxury-lobby.jpg")
+        }
+
+        // Load projects data
+        const portfolioData = await loadPortfolio()
+        if (portfolioData.length > 0) {
+          setProjects(portfolioData)
+        }
+      } catch (e) {
+        console.error('Failed to load portfolio data:', e)
+      }
+    }
+
+    loadContent()
+
+    const handleStorageChange = () => {
+      loadContent()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('portfolioHeroUpdated', handleStorageChange)
+    window.addEventListener('projectsUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('portfolioHeroUpdated', handleStorageChange)
+      window.removeEventListener('projectsUpdated', handleStorageChange)
+    }
+  }, [])
+
+  const filteredProjects = projects.filter(project => {
     const matchesCategory = selectedCategory === "All" || project.category === selectedCategory
     const matchesStatus = selectedStatus === "All" || project.status === selectedStatus
     return matchesCategory && matchesStatus
@@ -106,7 +80,7 @@ export default function PortfolioPage() {
         eyebrow="Our Portfolio"
         title="Projects That Define Excellence"
         subtitle="Explore our diverse portfolio of residential, commercial, and redevelopment projects"
-        imageSrc="/construction-site-luxury-lobby.jpg"
+        imageSrc={heroImageSrc || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3Crect width='1' height='1' fill='%23f3f4f6'/%3E%3C/svg%3E"}
       />
       
       <SectionPage
@@ -117,14 +91,17 @@ export default function PortfolioPage() {
         
         <MarketsGrid />
         
-        <div className="mt-16">
-          <h3 className="text-2xl font-semibold mb-8 text-center">Complete Project Portfolio</h3>
+      </SectionPage>
+      
+      <section className="section-dark py-16">
+        <div className="mx-auto max-w-6xl px-4">
+          <h3 className="text-2xl font-semibold mb-8 text-center text-white">Complete Project Portfolio</h3>
           
           {/* Filter Buttons */}
           <div className="space-y-6 mb-8">
             {/* Category Filters */}
             <div className="text-center">
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">Filter by Category</h4>
+              <h4 className="text-sm font-medium text-white/70 mb-3">Filter by Category</h4>
               <div className="flex flex-wrap justify-center gap-3">
                 {categories.map((category) => (
                   <button
@@ -133,7 +110,7 @@ export default function PortfolioPage() {
                     className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                       selectedCategory === category
                         ? 'bg-primary text-white shadow-lg'
-                        : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
+                        : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
                     }`}
                   >
                     {category}
@@ -144,7 +121,7 @@ export default function PortfolioPage() {
             
             {/* Status Filters */}
             <div className="text-center">
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">Filter by Status</h4>
+              <h4 className="text-sm font-medium text-white/70 mb-3">Filter by Status</h4>
               <div className="flex flex-wrap justify-center gap-3">
                 {statuses.map((status) => (
                   <button
@@ -153,7 +130,7 @@ export default function PortfolioPage() {
                     className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                       selectedStatus === status
                         ? 'bg-green-600 text-white shadow-lg'
-                        : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
+                        : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
                     }`}
                   >
                     {status}
@@ -165,7 +142,7 @@ export default function PortfolioPage() {
           
           {/* Projects Count */}
           <div className="text-center mb-6">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/70">
               Showing {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}
               {selectedCategory !== "All" && ` in ${selectedCategory}`}
               {selectedStatus !== "All" && ` with ${selectedStatus} status`}
@@ -174,7 +151,11 @@ export default function PortfolioPage() {
           
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project) => (
-              <Card key={project.title} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <Card 
+                key={project.title} 
+                className="overflow-hidden hover:shadow-lg transition-shadow duration-300 p-0 cursor-pointer"
+                onClick={() => router.push(`/portfolio/${project.id}`)}
+              >
                 <div className="relative">
                   <img 
                     src={project.image} 
@@ -214,9 +195,9 @@ export default function PortfolioPage() {
             ))}
           </div>
         </div>
-
-        <ProjectsFeatured projects={portfolioProjects.filter(p => p.featured)} />
-
+      </section>
+      
+      <SectionPage>
         <div className="mt-16 text-center bg-muted/30 rounded-xl p-8">
           <h3 className="text-2xl font-semibold mb-4">Ready to Start Your Project?</h3>
           <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">

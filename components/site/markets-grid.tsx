@@ -1,24 +1,60 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { FloatingParticles } from "@/components/ui/floating-particles"
 
-const markets = [
+const defaultMarkets = [
   {
+    id: '1',
     title: "Luxury Living",
-    img: "/modern-luxury-residence-exterior.jpg",
+    image: "/modern-luxury-residence-exterior.jpg",
   },
   {
+    id: '2',
     title: "Urban Redevelopment",
-    img: "/urban-redevelopment-aerial-construction.jpg",
+    image: "/urban-redevelopment-aerial-construction.jpg",
   },
   {
+    id: '3',
     title: "Coastal Projects",
-    img: "/coastal-villa-architecture.jpg",
+    image: "/coastal-villa-architecture.jpg",
   },
 ]
 
 export default function MarketsGrid() {
+  const [markets, setMarkets] = useState(defaultMarkets)
+
+  useEffect(() => {
+    const loadMarkets = async () => {
+      try {
+        const response = await fetch('/api/data?key=markets-data')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.data && Array.isArray(result.data)) {
+            setMarkets(result.data)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load markets data:', e)
+      }
+    }
+
+    loadMarkets()
+
+    const handleStorageChange = () => {
+      loadMarkets()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('marketsUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('marketsUpdated', handleStorageChange)
+    }
+  }, [])
+
   return (
     <section className="relative bg-background text-foreground overflow-hidden">
       <FloatingParticles count={8} />
@@ -38,7 +74,7 @@ export default function MarketsGrid() {
               className="group relative overflow-hidden rounded-lg"
             >
               <img
-                src={m.img || "/placeholder.svg"}
+                src={m.image || "/placeholder.svg"}
                 alt={m.title}
                 className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />

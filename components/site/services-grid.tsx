@@ -3,35 +3,70 @@
 import { motion } from "framer-motion"
 import { Building2, Home, Wrench, Users } from "lucide-react"
 import { FloatingParticles } from "@/components/ui/floating-particles"
+import { useState, useEffect } from "react"
+import { loadServices } from "@/lib/data-utils"
 
-const services = [
-  {
-    icon: Building2,
-    title: "Commercial Construction",
-    description: "Office buildings, retail spaces, and mixed-use developments with modern amenities.",
-    image: "/commercial-building-glass.jpg"
-  },
-  {
-    icon: Home,
-    title: "Residential Projects",
-    description: "Luxury homes, apartments, and villa communities designed for modern living.",
-    image: "/modern-luxury-residence-exterior.jpg"
-  },
-  {
-    icon: Wrench,
-    title: "Redevelopment",
-    description: "Transforming existing structures into contemporary, sustainable spaces.",
-    image: "/urban-redevelopment-aerial-construction.jpg"
-  },
-  {
-    icon: Users,
-    title: "Project Management",
-    description: "End-to-end project oversight ensuring quality, timeline, and budget adherence.",
-    image: "/construction-manager.jpg"
-  }
-]
+const iconMap = {
+  'Building2': Building2,
+  'Home': Home,
+  'Wrench': Wrench,
+  'Users': Users
+}
 
 export default function ServicesGrid() {
+  const [services, setServices] = useState([
+    {
+      icon: "Building2",
+      title: "Commercial Construction",
+      description: "Office buildings, retail spaces, and mixed-use developments with modern amenities.",
+      image: "/commercial-building-glass.jpg"
+    },
+    {
+      icon: "Home",
+      title: "Residential Projects",
+      description: "Luxury homes, apartments, and villa communities designed for modern living.",
+      image: "/modern-luxury-residence-exterior.jpg"
+    },
+    {
+      icon: "Wrench",
+      title: "Redevelopment",
+      description: "Transforming existing structures into contemporary, sustainable spaces.",
+      image: "/urban-redevelopment-aerial-construction.jpg"
+    },
+    {
+      icon: "Users",
+      title: "Project Management",
+      description: "End-to-end project oversight ensuring quality, timeline, and budget adherence.",
+      image: "/construction-manager.jpg"
+    }
+  ])
+
+  useEffect(() => {
+    const loadServicesData = async () => {
+      try {
+        const servicesData = await loadServices()
+        if (servicesData.length > 0) {
+          setServices(servicesData)
+        }
+      } catch (e) {
+        console.error('Failed to load services:', e)
+      }
+    }
+
+    loadServicesData()
+
+    const handleStorageChange = () => {
+      loadServicesData()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('servicesUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('servicesUpdated', handleStorageChange)
+    }
+  }, [])
   return (
     <section className="relative bg-muted/30 py-10 md:py-20 overflow-hidden">
       <FloatingParticles count={12} />
@@ -71,7 +106,10 @@ export default function ServicesGrid() {
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="p-2 rounded-lg bg-primary/10">
-                    <service.icon className="w-5 h-5 text-primary" />
+                    {(() => {
+                      const IconComponent = iconMap[service.icon as keyof typeof iconMap] || Building2
+                      return <IconComponent className="w-5 h-5 text-primary" />
+                    })()}
                   </div>
                   <h3 className="font-semibold">{service.title}</h3>
                 </div>
