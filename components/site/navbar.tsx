@@ -1,12 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Logo } from "./logo"
-import { Menu, User, X } from "lucide-react"
+import { Menu, User, X, ChevronUp } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 const mainNavLinks = [
@@ -36,10 +36,53 @@ const drawerLinks = [
 export function SiteNav() {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 100)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b">
-      <div className="container mx-auto flex items-center justify-between px-4 py-4">
+    <motion.nav
+      className={cn(
+        "top-0 left-0 right-0 z-50",
+        isScrolled ? "fixed mx-3 my-2" : "relative"
+      )}
+      animate={{
+        backgroundColor: isScrolled ? "rgba(255, 255, 255, 0.75)" : "rgba(255, 255, 255, 1)",
+        backdropFilter: isScrolled ? "blur(12px)" : "blur(0px)",
+        borderRadius: isScrolled ? "16px" : "0px",
+        boxShadow: isScrolled 
+          ? "0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+          : "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+        borderWidth: "1px",
+        borderColor: isScrolled ? "rgba(229, 231, 235, 0.8)" : "rgba(229, 231, 235, 1)"
+      }}
+      transition={{
+        duration: 0.4,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
+    >
+      <motion.div
+        className="container mx-auto flex items-center justify-between px-4"
+        animate={{
+          paddingTop: isScrolled ? "8px" : "16px",
+          paddingBottom: isScrolled ? "8px" : "16px"
+        }}
+        transition={{
+          duration: 0.4,
+          ease: [0.25, 0.46, 0.45, 0.94]
+        }}
+      >
         <Logo />
 
         <div className="flex items-center gap-8">
@@ -56,7 +99,7 @@ export function SiteNav() {
                 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <span className="text-sm font-medium text-gray-600 group-hover:text-primary transition-colors duration-200 tracking-wide">
+                <span className={`text-sm font-medium group-hover:text-primary transition-colors duration-200 tracking-wide ${isScrolled ? 'text-black' : 'text-gray-600 '} `}>
                   {l.label}
                 </span>
                 <motion.div
@@ -70,6 +113,8 @@ export function SiteNav() {
                 />
               </motion.div>
             ))}
+
+
 
             <button className="bg-gray-900 text-white px-8 py-4 hover:bg-gray-800 transition-colors flex text-sm items-center gap-2 cursor-pointer" onClick={() => router.push('/contact')}>
               CONTACT US
@@ -87,7 +132,7 @@ export function SiteNav() {
             <Menu className="w-6 h-6" />
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Right Drawer */}
       {drawerOpen && (
@@ -100,12 +145,12 @@ export function SiteNav() {
             className="fixed inset-0 bg-black/50 z-9998"
             onClick={() => setDrawerOpen(false)}
           />
-          <motion.div 
+          <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed top-0 right-0 h-full w-80 shadow-xl z-9999 border-l" 
+            className="fixed top-0 right-0 h-full w-80 shadow-xl z-9999 border-l"
             style={{ backgroundColor: '#ffffff' }}
           >
             <div className="p-6">
@@ -202,6 +247,8 @@ export function SiteNav() {
           </motion.div>
         </>
       )}
-    </nav>
+      
+
+    </motion.nav>
   )
 }

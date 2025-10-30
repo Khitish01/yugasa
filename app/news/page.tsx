@@ -1,132 +1,98 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { SectionHero } from "@/components/site/section-hero"
 import { SectionPage } from "@/components/site/section-page"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Calendar, User, ArrowRight, Clock, Search, Filter, TrendingUp, Award, Building, Lightbulb } from "lucide-react"
+import { getContent } from "@/lib/admin"
+import { newsItems as defaultNewsItems } from "@/lib/news-data"
+import { useRouter } from "next/navigation"
 
-const categories = [
-  { name: "All", icon: Filter, count: 12 },
-  { name: "Company News", icon: Building, count: 4 },
-  { name: "Industry Insights", icon: TrendingUp, count: 5 },
-  { name: "Awards & Recognition", icon: Award, count: 2 },
-  { name: "Innovation", icon: Lightbulb, count: 3 }
-]
 
-const allNews = [
-  {
-    id: 1,
-    title: "Yugasa Builders Wins 'Developer of the Year' at Mumbai Real Estate Excellence Awards 2025",
-    excerpt: "Recognized for outstanding contribution to sustainable construction and innovative residential projects across Mumbai metropolitan region.",
-    category: "Awards & Recognition",
-    author: "Yugasa Media Team",
-    date: "2025-01-18",
-    readTime: "3 min read",
-    image: "/luxury-construction-interior-lobby-with-wood-panel.jpg",
-    featured: true,
-    tags: ["Awards", "Recognition", "Excellence"]
-  },
-  {
-    id: 2,
-    title: "Revolutionary Green Building Technology Reduces Construction Carbon Footprint by 40%",
-    excerpt: "Yugasa Builders pioneers eco-friendly construction methods using recycled materials and renewable energy systems in all new projects.",
-    category: "Innovation",
-    author: "Dr. Priya Sharma",
-    date: "2025-01-15", 
-    readTime: "6 min read",
-    image: "/sustainable-materials.jpg",
-    featured: false,
-    tags: ["Sustainability", "Green Tech", "Innovation"]
-  },
-  {
-    id: 3,
-    title: "Mumbai Real Estate Market Shows 25% Growth in Premium Residential Segment",
-    excerpt: "Latest market analysis reveals strong demand for luxury residential properties, with Yugasa projects leading the premium segment growth.",
-    category: "Industry Insights",
-    author: "Rajesh Mehta",
-    date: "2025-01-12",
-    readTime: "5 min read",
-    image: "/modern-luxury-residence-exterior.jpg",
-    featured: false,
-    tags: ["Market Analysis", "Growth", "Premium"]
-  },
-  {
-    id: 4,
-    title: "Serenity Heights Phase 2 Launch: 150 Premium Apartments with Smart Home Integration",
-    excerpt: "Following the success of Phase 1, we're launching 150 new premium apartments featuring AI-powered home automation and sustainable design.",
-    category: "Company News",
-    author: "Yugasa Development Team",
-    date: "2025-01-10",
-    readTime: "4 min read",
-    image: "/commercial-building-glass.jpg",
-    featured: false,
-    tags: ["New Launch", "Smart Homes", "Premium"]
-  },
-  {
-    id: 5,
-    title: "AI and IoT Transforming Construction Project Management: A Case Study",
-    excerpt: "How artificial intelligence and Internet of Things are revolutionizing construction timelines, quality control, and cost management.",
-    category: "Innovation",
-    author: "Amit Kumar",
-    date: "2025-01-08",
-    readTime: "7 min read",
-    image: "/construction-site-cranes.png",
-    featured: false,
-    tags: ["AI", "IoT", "Technology"]
-  },
-  {
-    id: 6,
-    title: "Yugasa Builders Partners with Leading Architects for Iconic Mumbai Skyline Project",
-    excerpt: "Strategic collaboration with internationally acclaimed architects to design a landmark 50-story mixed-use development in Bandra-Kurla Complex.",
-    category: "Company News",
-    author: "Yugasa Media Team",
-    date: "2025-01-05",
-    readTime: "4 min read",
-    image: "/urban-redevelopment-aerial-construction.jpg",
-    featured: false,
-    tags: ["Partnership", "Architecture", "Landmark"]
-  },
-  {
-    id: 7,
-    title: "Construction Industry Adopts Modular Building Techniques for Faster Project Delivery",
-    excerpt: "Industry-wide shift towards prefabricated and modular construction methods reduces project timelines by 30% while maintaining quality standards.",
-    category: "Industry Insights",
-    author: "Meera Joshi",
-    date: "2025-01-02",
-    readTime: "5 min read",
-    image: "/news/news-2.png",
-    featured: false,
-    tags: ["Modular", "Efficiency", "Innovation"]
-  },
-  {
-    id: 8,
-    title: "Yugasa Foundation Launches Skill Development Program for Construction Workers",
-    excerpt: "Comprehensive training initiative aims to upskill 1000+ construction workers in modern building techniques and safety protocols.",
-    category: "Company News",
-    author: "Yugasa Foundation",
-    date: "2024-12-28",
-    readTime: "3 min read",
-    image: "/luxury-construction-interior-lobby-with-wood-panel.jpg",
-    featured: false,
-    tags: ["CSR", "Training", "Skills"]
-  }
-]
+
+
 
 export default function NewsPage() {
+  const router = useRouter()
+  const [allNews, setAllNews] = useState(defaultNewsItems)
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
+  const [heroBackground, setHeroBackground] = useState("/news/news-2.png")
+  
+  const categories = [
+    { name: "All", icon: Filter, count: allNews.length },
+    { name: "Company News", icon: Building, count: allNews.filter(n => n.category === "Company News").length },
+    { name: "Industry Insights", icon: TrendingUp, count: allNews.filter(n => n.category === "Industry Insights").length },
+    { name: "Awards & Recognition", icon: Award, count: allNews.filter(n => n.category === "Awards & Recognition").length },
+    { name: "Innovation", icon: Lightbulb, count: allNews.filter(n => n.category === "Innovation").length }
+  ]
+
+  useEffect(() => {
+    const loadNews = async () => {
+      try {
+        const response = await fetch('/api/data?key=news-data')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.data && Array.isArray(result.data)) {
+            setAllNews(result.data)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load news data:', e)
+      }
+    }
+
+    const loadHeroBackground = async () => {
+      try {
+        const response = await fetch('/api/data?key=news-hero-background')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.data) {
+            setHeroBackground(result.data)
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load hero background:', e)
+      }
+    }
+
+    loadNews()
+    loadHeroBackground()
+
+    const handleStorageChange = () => {
+      loadNews()
+      loadHeroBackground()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('newsUpdated', handleStorageChange)
+    window.addEventListener('newsHeroUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('newsUpdated', handleStorageChange)
+      window.removeEventListener('newsHeroUpdated', handleStorageChange)
+    }
+  }, [])
   
   const featuredNews = allNews.find(news => news.featured)
   
+  const isNewArticle = (date: string) => {
+    const articleDate = new Date(date)
+    const now = new Date()
+    const diffInHours = (now.getTime() - articleDate.getTime()) / (1000 * 60 * 60)
+    return diffInHours <= 48
+  }
+
   const filteredNews = allNews.filter(news => {
     const matchesCategory = selectedCategory === "All" || news.category === selectedCategory
     const matchesSearch = news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          news.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         news.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-    return matchesCategory && matchesSearch && !news.featured
+                         news.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    return matchesCategory && matchesSearch
   })
 
   return (
@@ -135,7 +101,7 @@ export default function NewsPage() {
         eyebrow="News & Insights"
         title="Building Tomorrow's Stories Today"
         subtitle="Discover the latest innovations, achievements, and industry insights from Yugasa Builders"
-        imageSrc="/news/news-2.png"
+        imageSrc={heroBackground}
       />
       
       <SectionPage
@@ -271,7 +237,11 @@ export default function NewsPage() {
           {filteredNews.length > 0 ? (
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {filteredNews.map((article) => (
-                <Card key={article.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md">
+                <Card 
+                  key={article.id} 
+                  className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md p-0 cursor-pointer"
+                  onClick={() => router.push(`/news/${article.id}`)}
+                >
                   <div className="relative overflow-hidden">
                     <img 
                       src={article.image} 
@@ -283,10 +253,17 @@ export default function NewsPage() {
                         {article.category}
                       </Badge>
                     </div>
+                    {isNewArticle(article.date) && (
+                      <div className="absolute top-4 right-4">
+                        <Badge className="bg-red-500 text-white border-0 animate-pulse">
+                          NEW
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                   <CardContent className="p-6">
                     <div className="flex flex-wrap gap-1 mb-3">
-                      {article.tags.slice(0, 3).map(tag => (
+                      {article.tags?.slice(0, 3).map(tag => (
                         <Badge key={tag} variant="outline" className="text-xs">
                           {tag}
                         </Badge>

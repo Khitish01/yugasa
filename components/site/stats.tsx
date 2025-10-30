@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { FloatingParticles } from "@/components/ui/floating-particles"
+import { apiService } from "@/lib/api-service"
 
 interface CountingNumberProps {
   target: number
@@ -77,11 +78,34 @@ function CountingNumber({ target, suffix = "", delay = 0 }: CountingNumberProps)
 }
 
 export default function StatsComponent() {
-    const stats = [
-        { label: "Years Experience", value: 15, suffix: "+", color: "from-blue-500 to-purple-600" },
-        { label: "Projects Delivered", value: 75, suffix: "+", color: "from-green-500 to-teal-600" },
-        { label: "Happy Families", value: 1200, suffix: "+", color: "from-orange-500 to-red-600" },
+    const [stats, setStats] = useState([])
+
+    const colors = [
+        "from-blue-500 to-purple-600",
+        "from-green-500 to-teal-600", 
+        "from-orange-500 to-red-600",
+        "from-pink-500 to-rose-600",
+        "from-indigo-500 to-blue-600"
     ]
+
+    useEffect(() => {
+        const loadStats = async () => {
+            try {
+                const statsData = await apiService.get<any[]>('stats-data')
+                if (statsData && Array.isArray(statsData)) {
+                    const statsWithColors = statsData.map((stat, index) => ({
+                        ...stat,
+                        color: colors[index % colors.length]
+                    }))
+                    setStats(statsWithColors)
+                }
+            } catch (e) {
+                console.error('Failed to load stats:', e)
+            }
+        }
+        
+        loadStats()
+    }, [])
 
     return(
     <section className="relative container mx-auto px-4 py-16 md:py-24 overflow-hidden">

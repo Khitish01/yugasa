@@ -1,6 +1,8 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import { getContent } from "@/lib/admin"
 
 interface Project {
   title: string
@@ -8,26 +10,50 @@ interface Project {
   image: string
   category?: string
   location?: string
+  featured?: boolean
 }
 
 interface ProjectsFeaturedProps {
   projects?: Project[]
 }
 
-const defaultProjects = [
-  {
-    title: "Serenity Heights",
-    meta: "3BHK · 2200 sqft · South City",
-    image: "/modern-luxury-residence-exterior.jpg",
-  },
-  {
-    title: "The Grove Villas",
-    meta: "Premium Villas · 4500 sqft",
-    image: "/luxury-villa-pool.png",
-  },
-]
+export default function ProjectsFeatured({ projects }: ProjectsFeaturedProps) {
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([])
 
-export default function ProjectsFeatured({ projects = defaultProjects }: ProjectsFeaturedProps) {
+  useEffect(() => {
+    const loadProjects = async () => {
+      if (projects) {
+        setFeaturedProjects(projects)
+        return
+      }
+
+      try {
+        const response = await fetch('/api/data?key=portfolio-data')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.data && Array.isArray(result.data)) {
+            setFeaturedProjects(result.data.filter((p: Project) => p.featured))
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load projects:', e)
+      }
+    }
+
+    loadProjects()
+
+    const handleStorageChange = () => {
+      loadProjects()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('projectsUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('projectsUpdated', handleStorageChange)
+    }
+  }, [projects])
   return (
     <section className="section-dark">
       <div className="mx-auto max-w-6xl px-4 py-16">
@@ -36,7 +62,7 @@ export default function ProjectsFeatured({ projects = defaultProjects }: Project
           <h2 className="mt-3 text-3xl md:text-4xl font-semibold text-white">Crafted With Detail</h2>
         </header>
         <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {projects.map((p, idx) => (
+          {featuredProjects.map((p, idx) => (
             <motion.article
               key={p.title}
               initial={{ opacity: 0, y: 16 }}

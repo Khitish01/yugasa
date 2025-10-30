@@ -3,35 +3,42 @@
 import { motion } from "framer-motion"
 import { Building2, Home, Wrench, Users } from "lucide-react"
 import { FloatingParticles } from "@/components/ui/floating-particles"
+import { useState, useEffect } from "react"
+import { OptimizedImage } from "@/components/ui/optimized-image"
+import { apiService } from "@/lib/api-service"
 
-const services = [
-  {
-    icon: Building2,
-    title: "Commercial Construction",
-    description: "Office buildings, retail spaces, and mixed-use developments with modern amenities.",
-    image: "/commercial-building-glass.jpg"
-  },
-  {
-    icon: Home,
-    title: "Residential Projects",
-    description: "Luxury homes, apartments, and villa communities designed for modern living.",
-    image: "/modern-luxury-residence-exterior.jpg"
-  },
-  {
-    icon: Wrench,
-    title: "Redevelopment",
-    description: "Transforming existing structures into contemporary, sustainable spaces.",
-    image: "/urban-redevelopment-aerial-construction.jpg"
-  },
-  {
-    icon: Users,
-    title: "Project Management",
-    description: "End-to-end project oversight ensuring quality, timeline, and budget adherence.",
-    image: "/construction-manager.jpg"
-  }
-]
+const iconMap = {
+  'Building2': Building2,
+  'Home': Home,
+  'Wrench': Wrench,
+  'Users': Users
+}
 
 export default function ServicesGrid() {
+  const [services, setServices] = useState([])
+
+  useEffect(() => {
+    const loadServicesData = async () => {
+      try {
+        const servicesData = await apiService.get<any[]>('services-data')
+        if (servicesData && servicesData.length > 0) {
+          setServices(servicesData)
+        }
+      } catch (e) {
+        console.error('Failed to load services:', e)
+      }
+    }
+
+    loadServicesData()
+
+    const handleStorageChange = () => {
+      apiService.clearCache('services-data')
+      loadServicesData()
+    }
+
+    window.addEventListener('servicesUpdated', handleStorageChange)
+    return () => window.removeEventListener('servicesUpdated', handleStorageChange)
+  }, [])
   return (
     <section className="relative bg-muted/30 py-10 md:py-20 overflow-hidden">
       <FloatingParticles count={12} />
@@ -62,16 +69,22 @@ export default function ServicesGrid() {
               className="group relative overflow-hidden rounded-xl bg-card border hover:shadow-lg transition-all duration-300"
             >
               <div className="aspect-4/3 overflow-hidden">
-                <img
+                <OptimizedImage
                   src={service.image}
                   alt={service.title}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full transition-transform duration-500 group-hover:scale-105"
+                  width={400}
+                  height={300}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               </div>
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="p-2 rounded-lg bg-primary/10">
-                    <service.icon className="w-5 h-5 text-primary" />
+                    {(() => {
+                      const IconComponent = iconMap[service.icon as keyof typeof iconMap] || Building2
+                      return <IconComponent className="w-5 h-5 text-primary" />
+                    })()}
                   </div>
                   <h3 className="font-semibold">{service.title}</h3>
                 </div>

@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion"
 import { useRef, useState, useEffect } from "react"
+import { getContent } from "@/lib/admin"
 
 export default function HeroLuxe() {
   const ref = useRef(null)
@@ -14,8 +15,47 @@ export default function HeroLuxe() {
   
   const [displayText, setDisplayText] = useState("")
   const [wordIndex, setWordIndex] = useState(0)
-  const words = ["CONSTRUCTION", "INNOVATION", "EXCELLENCE", "PRECISION"]
+  const [heroContent, setHeroContent] = useState({
+    title: "CONSTRUCTION",
+    subtitle: "EXCLUSIVE",
+    description: "YUGASA BUILDERS | MUMBAI | INDIA",
+    background: "/luxury-construction-interior-lobby-with-wood-panel.jpg"
+  })
+  const [words, setWords] = useState(["CONSTRUCTION", "INNOVATION", "EXCELLENCE", "PRECISION"])
   
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const [subtitleRes, descriptionRes, backgroundRes, typewriterRes] = await Promise.all([
+          fetch('/api/data?key=hero-subtitle'),
+          fetch('/api/data?key=hero-description'),
+          fetch('/api/data?key=hero-background'),
+          fetch('/api/data?key=typewriter-texts')
+        ])
+        
+        const subtitle = subtitleRes.ok ? (await subtitleRes.json()).data : null
+        const description = descriptionRes.ok ? (await descriptionRes.json()).data : null
+        const background = backgroundRes.ok ? (await backgroundRes.json()).data : null
+        const typewriterWords = typewriterRes.ok ? (await typewriterRes.json()).data : null
+        
+        setHeroContent({
+          title: "CONSTRUCTION",
+          subtitle: subtitle || "EXCLUSIVE",
+          description: description || "YUGASA BUILDERS | MUMBAI | INDIA",
+          background: background || "/luxury-construction-interior-lobby-with-wood-panel.jpg"
+        })
+        
+        if (typewriterWords && Array.isArray(typewriterWords)) {
+          setWords(typewriterWords)
+        }
+      } catch (error) {
+        console.error('Failed to load hero content:', error)
+      }
+    }
+    
+    loadContent()
+  }, [])
+
   useEffect(() => {
     let interval: NodeJS.Timeout
     let timeout: NodeJS.Timeout
@@ -64,7 +104,7 @@ export default function HeroLuxe() {
       <motion.div
         className="absolute inset-0 bg-center bg-cover"
         style={{
-          backgroundImage: "url('/luxury-construction-interior-lobby-with-wood-panel.jpg')",
+          backgroundImage: `url('${heroContent.background}')`,
           y,
         }}
         aria-hidden="true"
@@ -90,7 +130,7 @@ export default function HeroLuxe() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            EXCLUSIVE
+            {heroContent.subtitle}
           </motion.p>
           <motion.h1 
             className="text-5xl md:text-7xl lg:text-8xl font-playfair font-light text-white tracking-widest leading-none"
@@ -112,7 +152,7 @@ export default function HeroLuxe() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.9 }}
           >
-            YUGASA BUILDERS | MUMBAI | INDIA
+            {heroContent.description}
           </motion.p>
         </motion.div>
       </div>
