@@ -4,7 +4,7 @@ import dbConnect from '../lib/mongodb'
 import { Testimonials } from '../models'
 
 // Load environment variables
-config({ path: path.join(process.cwd(), '.env.local') })
+config({ path: path.join(process.cwd(), '.env') })
 
 async function checkTestimonials() {
   await dbConnect()
