@@ -5,8 +5,8 @@ class ApiService {
   private saveQueue = new Map<string, { data: any; timestamp: number }>()
   private saveTimer: NodeJS.Timeout | null = null
   
-  private readonly CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-  private readonly DEBOUNCE_DELAY = 500 // 500ms
+  private readonly CACHE_TTL = 10 * 60 * 1000 // 10 minutes
+  private readonly DEBOUNCE_DELAY = 300 // 300ms
   private readonly BATCH_SIZE = 10
 
   // Get data with caching
@@ -141,7 +141,11 @@ class ApiService {
   private async fetchData<T>(key: string): Promise<T | null> {
     try {
       const response = await fetch(`/api/data?key=${key}`, {
-        headers: { 'Cache-Control': 'no-cache' }
+        headers: { 
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
+        },
+        next: { revalidate: 60 }
       })
       
       if (!response.ok) {

@@ -57,11 +57,13 @@ export default function HeroLuxe() {
   }, [])
 
   useEffect(() => {
+    if (!words || words.length === 0) return
+    
     let interval: NodeJS.Timeout
     let timeout: NodeJS.Timeout
     
     const startAnimation = () => {
-      const word = words[wordIndex]
+      const word = words[wordIndex] || words[0] || "CONSTRUCTION"
       let charIndex = 0
       let isTyping = true
       
@@ -97,7 +99,7 @@ export default function HeroLuxe() {
       clearTimeout(timeout)
       clearTimeout(initialDelay)
     }
-  }, [wordIndex])
+  }, [wordIndex, words])
 
   return (
     <section ref={ref} className="relative flex-1 overflow-hidden">

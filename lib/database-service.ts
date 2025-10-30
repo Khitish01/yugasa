@@ -2,6 +2,19 @@ import dbConnect from './mongodb'
 import { News, Portfolio, Services, Testimonials, Markets, Team, Settings } from '../models'
 import mongoose from 'mongoose'
 
+// Ensure indexes are created
+if (typeof window === 'undefined') {
+  Promise.all([
+    News.createIndexes(),
+    Portfolio.createIndexes(),
+    Services.createIndexes(),
+    Testimonials.createIndexes(),
+    Markets.createIndexes(),
+    Team.createIndexes(),
+    Settings.createIndexes()
+  ]).catch(err => console.error('Index creation error:', err))
+}
+
 // Create a simple collection for social links
 const socialLinksSchema = new mongoose.Schema({
   data: mongoose.Schema.Types.Mixed
@@ -64,7 +77,7 @@ export class DatabaseService {
       // Handle regular collections
       const Model = modelMap[key as keyof typeof modelMap]
       if (Model) {
-        const data = await Model.find({}).lean()
+        const data = await Model.find({}).lean().exec()
         return data as T
       }
       
