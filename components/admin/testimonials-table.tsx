@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { getContent, setContent } from '@/lib/admin'
+import { setContent } from '@/lib/admin'
 import { Button } from '@/components/ui/button'
 import { Plus, Edit, Trash2, Star } from 'lucide-react'
+import { useLoading } from '@/contexts/loading-context'
 
 interface Testimonial {
   id: string
@@ -15,82 +15,30 @@ interface Testimonial {
 }
 
 interface TestimonialsTableProps {
+  testimonials?: Testimonial[]
   onEdit: (testimonial: Testimonial) => void
   onAdd: () => void
-  refreshTrigger?: number
+  onDataChange?: () => void
 }
 
-export function TestimonialsTable({ onEdit, onAdd, refreshTrigger }: TestimonialsTableProps) {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+export function TestimonialsTable({ testimonials = [], onEdit, onAdd, onDataChange }: TestimonialsTableProps) {
+  const { startLoading, hideLoading } = useLoading()
 
-  useEffect(() => {
-    loadTestimonials()
-  }, [refreshTrigger])
 
-  const loadTestimonials = async () => {
-    try {
-      const stored = await getContent('testimonials-data')
-      if (stored) {
-        let parsedTestimonials
-        try {
-          parsedTestimonials = JSON.parse(stored)
-        } catch {
-          parsedTestimonials = stored
-        }
-        if (Array.isArray(parsedTestimonials)) {
-          const testimonialsWithIds = parsedTestimonials.map((t, index) => ({
-            ...t,
-            id: t.id || `testimonial-${index}`
-          }))
-          setTestimonials(testimonialsWithIds)
-        } else {
-          setDefaultTestimonials()
-        }
-      } else {
-        setDefaultTestimonials()
-      }
-    } catch (e) {
-      setDefaultTestimonials()
-    }
-  }
-
-  const setDefaultTestimonials = async () => {
-    const defaultTestimonials = [
-      {
-        id: 'testimonial-1',
-        name: "Rajesh Sharma",
-        role: "Homeowner",
-        content: "Yugasa Builders transformed our vision into reality. The attention to detail and quality of construction exceeded our expectations. Our dream home was delivered on time and within budget.",
-        rating: 5,
-        image: "/placeholder-user.jpg"
-      },
-      {
-        id: 'testimonial-2',
-        name: "Priya Patel",
-        role: "Property Developer",
-        content: "Working with Yugasa has been exceptional. Their project management skills and commitment to quality make them our preferred construction partner for all residential developments.",
-        rating: 5,
-        image: "/placeholder-user.jpg"
-      },
-      {
-        id: 'testimonial-3',
-        name: "Amit Kumar",
-        role: "Business Owner",
-        content: "The commercial space Yugasa built for us perfectly balances functionality and aesthetics. Their team understood our business needs and delivered a space that enhances our operations.",
-        rating: 5,
-        image: "/placeholder-user.jpg"
-      }
-    ]
-    setTestimonials(defaultTestimonials)
-    await setContent('testimonials-data', JSON.stringify(defaultTestimonials))
-  }
 
   const deleteTestimonial = async (id: string) => {
     if (testimonials.length > 1) {
-      const newTestimonials = testimonials.filter(t => t.id !== id)
-      const success = await setContent('testimonials-data', JSON.stringify(newTestimonials))
-      if (success) {
-        setTestimonials(newTestimonials)
+      startLoading()
+      try {
+        const newTestimonials = testimonials.filter(t => t.id !== id)
+        const success = await setContent('testimonials-data', JSON.stringify(newTestimonials))
+        if (success && onDataChange) {
+          onDataChange()
+        }
+      } catch (error) {
+        console.error('Failed to delete testimonial:', error)
+      } finally {
+        hideLoading()
       }
     }
   }

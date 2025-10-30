@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react'
 import { getContent, setContent } from '@/lib/admin'
 import { Button } from '@/components/ui/button'
 import { X, Plus } from 'lucide-react'
+import { useLoading } from '@/contexts/loading-context'
 
 export function TypewriterEditor() {
   const [words, setWords] = useState(['CONSTRUCTION', 'INNOVATION', 'EXCELLENCE', 'PRECISION'])
+  const { startLoading, hideLoading } = useLoading()
 
   useEffect(() => {
     const loadWords = async () => {
+      startLoading()
       try {
         const stored = await getContent('typewriter-texts')
         if (stored) {
@@ -26,6 +29,8 @@ export function TypewriterEditor() {
         }
       } catch (e) {
         console.error('Failed to load words:', e)
+      } finally {
+        hideLoading()
       }
     }
     

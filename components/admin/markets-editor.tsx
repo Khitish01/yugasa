@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { loadMarkets, saveMarkets } from '@/lib/data-utils'
 import { Button } from '@/components/ui/button'
 import { Plus, Edit, Trash2, Upload } from 'lucide-react'
+import { Modal } from '@/components/ui/modal'
+import { useLoading } from '@/contexts/loading-context'
 
 interface Market {
   id: string
@@ -18,22 +20,26 @@ export function MarketsEditor() {
   const [markets, setMarkets] = useState<Market[]>([])
   const [editingMarket, setEditingMarket] = useState<Market | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const { startLoading, hideLoading } = useLoading()
 
   useEffect(() => {
     loadMarketsData()
   }, [])
 
   const loadMarketsData = async () => {
+    startLoading()
     try {
       const data = await loadMarkets()
       if (data.length > 0) {
         setMarkets(data)
       } else {
-        setDefaultMarkets()
+        await setDefaultMarkets()
       }
     } catch (error) {
       console.error('Failed to load markets:', error)
-      setDefaultMarkets()
+      await setDefaultMarkets()
+    } finally {
+      hideLoading()
     }
   }
 
@@ -65,31 +71,49 @@ export function MarketsEditor() {
       }
     ]
     setMarkets(defaultMarkets)
-    await saveMarkets(defaultMarkets)
+    try {
+      await saveMarkets(defaultMarkets)
+    } catch (error) {
+      console.error('Failed to save default markets:', error)
+    }
   }
 
   const handleSave = async (marketData: Market) => {
-    let updatedMarkets
-    if (editingMarket) {
-      updatedMarkets = markets.map(m => m.id === editingMarket.id ? marketData : m)
-    } else {
-      updatedMarkets = [...markets, { ...marketData, id: `market-${Date.now()}` }]
-    }
-    
-    const success = await saveMarkets(updatedMarkets)
-    if (success) {
-      setMarkets(updatedMarkets)
-      setShowForm(false)
-      setEditingMarket(null)
+    startLoading()
+    try {
+      let updatedMarkets
+      if (editingMarket) {
+        updatedMarkets = markets.map(m => m.id === editingMarket.id ? marketData : m)
+      } else {
+        updatedMarkets = [...markets, { ...marketData, id: `market-${Date.now()}` }]
+      }
+      
+      const success = await saveMarkets(updatedMarkets)
+      if (success) {
+        setMarkets(updatedMarkets)
+        setShowForm(false)
+        setEditingMarket(null)
+      }
+    } catch (error) {
+      console.error('Failed to save market:', error)
+    } finally {
+      hideLoading()
     }
   }
 
   const handleDelete = async (id: string) => {
     if (markets.length > 1) {
-      const updatedMarkets = markets.filter(m => m.id !== id)
-      const success = await saveMarkets(updatedMarkets)
-      if (success) {
-        setMarkets(updatedMarkets)
+      startLoading()
+      try {
+        const updatedMarkets = markets.filter(m => m.id !== id)
+        const success = await saveMarkets(updatedMarkets)
+        if (success) {
+          setMarkets(updatedMarkets)
+        }
+      } catch (error) {
+        console.error('Failed to delete market:', error)
+      } finally {
+        hideLoading()
       }
     }
   }
@@ -215,11 +239,13 @@ function MarketForm({ market, onSave, onCancel }: MarketFormProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold mb-4">
-          {market ? 'Edit Market' : 'Add New Market'}
-        </h3>
+    <Modal
+      isOpen={true}
+      onClose={onCancel}
+      title={market ? 'Edit Market' : 'Add New Market'}
+      maxWidth="max-w-md"
+    >
+      <div className="p-6">
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -306,6 +332,6 @@ function MarketForm({ market, onSave, onCancel }: MarketFormProps) {
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }

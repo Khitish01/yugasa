@@ -4,22 +4,18 @@ import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
-import { getContent } from "@/lib/admin"
-import { newsItems as defaultNewsItems } from "@/lib/news-data"
+import { apiService } from "@/lib/api-service"
 
 export default function NewsSection() {
   const router = useRouter()
-  const [newsItems, setNewsItems] = useState(defaultNewsItems)
+  const [newsItems, setNewsItems] = useState([])
 
   useEffect(() => {
     const loadNews = async () => {
       try {
-        const response = await fetch('/api/data?key=news-data')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data && Array.isArray(result.data)) {
-            setNewsItems(result.data)
-          }
+        const newsData = await apiService.get<any[]>('news-data')
+        if (newsData && Array.isArray(newsData)) {
+          setNewsItems(newsData)
         }
       } catch (e) {
         console.error('Failed to load news data:', e)
@@ -29,16 +25,12 @@ export default function NewsSection() {
     loadNews()
 
     const handleStorageChange = () => {
+      apiService.clearCache('news-data')
       loadNews()
     }
 
-    window.addEventListener('storage', handleStorageChange)
     window.addEventListener('newsUpdated', handleStorageChange)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('newsUpdated', handleStorageChange)
-    }
+    return () => window.removeEventListener('newsUpdated', handleStorageChange)
   }, [])
 
   const isNewArticle = (dateString: string) => {

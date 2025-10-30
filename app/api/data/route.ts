@@ -17,7 +17,30 @@ function validateKey(key: string): boolean {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const key = searchParams.get('key')
+  const keys = searchParams.get('keys')
   
+  // Handle batch requests
+  if (keys) {
+    const keyList = keys.split(',').filter(k => validateKey(k.trim()))
+    if (keyList.length === 0) {
+      return NextResponse.json({ error: 'No valid keys provided' }, { status: 400 })
+    }
+    
+    try {
+      const results: Record<string, any> = {}
+      await Promise.all(
+        keyList.map(async (k) => {
+          results[k] = await databaseService.get(k)
+        })
+      )
+      return NextResponse.json({ data: results })
+    } catch (error) {
+      console.error('Batch GET Error:', error)
+      return NextResponse.json({ error: 'Failed to read batch data' }, { status: 500 })
+    }
+  }
+  
+  // Handle single requests
   if (!key || !validateKey(key)) {
     return NextResponse.json({ error: 'Invalid key parameter' }, { status: 400 })
   }

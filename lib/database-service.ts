@@ -22,17 +22,9 @@ const modelMap = {
 export class DatabaseService {
   async get<T>(key: string): Promise<T | null> {
     if (typeof window !== 'undefined') {
-      // Client-side fallback to API
-      try {
-        const response = await fetch(`/api/data?key=${key}`)
-        if (response.ok) {
-          const result = await response.json()
-          return result.data
-        }
-      } catch (error) {
-        console.error('Client-side API call failed:', error)
-      }
-      return null
+      // Client-side uses optimized API service
+      const { apiService } = await import('./api-service')
+      return apiService.get<T>(key)
     }
     
     await dbConnect()
@@ -85,18 +77,9 @@ export class DatabaseService {
 
   async set<T>(key: string, data: T): Promise<boolean> {
     if (typeof window !== 'undefined') {
-      // Client-side fallback to API
-      try {
-        const response = await fetch('/api/data', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key, data })
-        })
-        return response.ok
-      } catch (error) {
-        console.error('Client-side API call failed:', error)
-        return false
-      }
+      // Client-side uses optimized API service
+      const { apiService } = await import('./api-service')
+      return apiService.set<T>(key, data)
     }
     
     await dbConnect()

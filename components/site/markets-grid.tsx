@@ -4,26 +4,8 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { FloatingParticles } from "@/components/ui/floating-particles"
 
-const defaultMarkets = [
-  {
-    id: '1',
-    title: "Luxury Living",
-    image: "/modern-luxury-residence-exterior.jpg",
-  },
-  {
-    id: '2',
-    title: "Urban Redevelopment",
-    image: "/urban-redevelopment-aerial-construction.jpg",
-  },
-  {
-    id: '3',
-    title: "Coastal Projects",
-    image: "/coastal-villa-architecture.jpg",
-  },
-]
-
 export default function MarketsGrid() {
-  const [markets, setMarkets] = useState(defaultMarkets)
+  const [markets, setMarkets] = useState([])
 
   useEffect(() => {
     const loadMarkets = async () => {

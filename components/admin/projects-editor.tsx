@@ -5,6 +5,8 @@ import { loadPortfolio, savePortfolio } from '@/lib/data-utils'
 import { Button } from '@/components/ui/button'
 import { Plus, Edit, Trash2, MapPin, Calendar, Building, Upload } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Modal } from '@/components/ui/modal'
+import { useLoading } from '@/contexts/loading-context'
 
 interface Project {
   id: string
@@ -24,22 +26,26 @@ export function ProjectsEditor() {
   const [projects, setProjects] = useState<Project[]>([])
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const { startLoading, hideLoading } = useLoading()
 
   useEffect(() => {
     loadProjectsData()
   }, [])
 
   const loadProjectsData = async () => {
+    startLoading()
     try {
       const data = await loadPortfolio()
       if (data.length > 0) {
         setProjects(data)
       } else {
-        setDefaultProjects()
+        await setDefaultProjects()
       }
     } catch (error) {
       console.error('Failed to load projects:', error)
-      setDefaultProjects()
+      await setDefaultProjects()
+    } finally {
+      hideLoading()
     }
   }
 
@@ -73,32 +79,50 @@ export function ProjectsEditor() {
       }
     ]
     setProjects(defaultProjects)
-    await savePortfolio(defaultProjects)
+    try {
+      await savePortfolio(defaultProjects)
+    } catch (error) {
+      console.error('Failed to save default projects:', error)
+    }
   }
 
   const handleSave = async (projectData: Project) => {
-    let updatedProjects
-    if (editingProject) {
-      updatedProjects = projects.map(p => p.id === editingProject.id ? projectData : p)
-    } else {
-      updatedProjects = [...projects, { ...projectData, id: Date.now().toString() }]
-    }
-    
-    const success = await savePortfolio(updatedProjects)
-    if (success) {
-      setProjects(updatedProjects)
-      setShowForm(false)
-      setEditingProject(null)
-      window.dispatchEvent(new CustomEvent('projectsUpdated'))
+    startLoading()
+    try {
+      let updatedProjects
+      if (editingProject) {
+        updatedProjects = projects.map(p => p.id === editingProject.id ? projectData : p)
+      } else {
+        updatedProjects = [...projects, { ...projectData, id: Date.now().toString() }]
+      }
+      
+      const success = await savePortfolio(updatedProjects)
+      if (success) {
+        setProjects(updatedProjects)
+        setShowForm(false)
+        setEditingProject(null)
+        window.dispatchEvent(new CustomEvent('projectsUpdated'))
+      }
+    } catch (error) {
+      console.error('Failed to save project:', error)
+    } finally {
+      hideLoading()
     }
   }
 
   const handleDelete = async (id: string) => {
-    const updatedProjects = projects.filter(p => p.id !== id)
-    const success = await savePortfolio(updatedProjects)
-    if (success) {
-      setProjects(updatedProjects)
-      window.dispatchEvent(new CustomEvent('projectsUpdated'))
+    startLoading()
+    try {
+      const updatedProjects = projects.filter(p => p.id !== id)
+      const success = await savePortfolio(updatedProjects)
+      if (success) {
+        setProjects(updatedProjects)
+        window.dispatchEvent(new CustomEvent('projectsUpdated'))
+      }
+    } catch (error) {
+      console.error('Failed to delete project:', error)
+    } finally {
+      hideLoading()
     }
   }
 
@@ -245,11 +269,13 @@ function ProjectForm({ project, onSave, onCancel }: ProjectFormProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold mb-4">
-          {project ? 'Edit Project' : 'Add New Project'}
-        </h3>
+    <Modal
+      isOpen={true}
+      onClose={onCancel}
+      title={project ? 'Edit Project' : 'Add New Project'}
+      maxWidth="max-w-2xl"
+    >
+      <div className="p-6">
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -399,6 +425,6 @@ function ProjectForm({ project, onSave, onCancel }: ProjectFormProps) {
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }

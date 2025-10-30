@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { getContent } from "@/lib/admin"
-import { portfolioProjects } from "@/lib/portfolio-data"
 
 interface Project {
   title: string
@@ -34,14 +33,10 @@ export default function ProjectsFeatured({ projects }: ProjectsFeaturedProps) {
           const result = await response.json()
           if (result.data && Array.isArray(result.data)) {
             setFeaturedProjects(result.data.filter((p: Project) => p.featured))
-          } else {
-            setFeaturedProjects(portfolioProjects.filter(p => p.featured))
           }
-        } else {
-          setFeaturedProjects(portfolioProjects.filter(p => p.featured))
         }
       } catch (e) {
-        setFeaturedProjects(portfolioProjects.filter(p => p.featured))
+        console.error('Failed to load projects:', e)
       }
     }
 

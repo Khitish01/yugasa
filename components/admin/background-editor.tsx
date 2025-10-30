@@ -4,14 +4,17 @@ import { useState, useEffect, useRef } from 'react'
 import { getContent, setContent } from '@/lib/admin'
 import { Button } from '@/components/ui/button'
 import { Upload } from 'lucide-react'
+import { useLoading } from '@/contexts/loading-context'
 
 export function BackgroundEditor() {
   const [bgImage, setBgImage] = useState('/luxury-construction-interior-lobby-with-wood-panel.jpg')
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { startLoading, hideLoading } = useLoading()
 
   useEffect(() => {
     const loadBackground = async () => {
+      startLoading()
       try {
         const stored = await getContent('hero-background')
         if (stored) {
@@ -19,6 +22,8 @@ export function BackgroundEditor() {
         }
       } catch (error) {
         console.error('Failed to load background:', error)
+      } finally {
+        hideLoading()
       }
     }
     

@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { getContent, setContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { Button } from '@/components/ui/button'
-import { X, Upload } from 'lucide-react'
+import { Upload } from 'lucide-react'
+import { Modal } from '@/components/ui/modal'
+import { useLoading } from '@/contexts/loading-context'
 
 interface Testimonial {
   id: string
@@ -31,6 +33,7 @@ export function TestimonialForm({ testimonial, onSave, onCancel }: TestimonialFo
   })
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { startLoading, hideLoading } = useLoading()
 
   useEffect(() => {
     if (testimonial) {
@@ -78,53 +81,40 @@ export function TestimonialForm({ testimonial, onSave, onCancel }: TestimonialFo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    startLoading()
     try {
-      const stored = await getContent('testimonials-data')
-      let testimonials: Testimonial[] = []
-      
-      if (stored) {
-        try {
-          testimonials = JSON.parse(stored)
-        } catch {
-          testimonials = stored
-        }
-      }
-      
-      if (!Array.isArray(testimonials)) {
-        testimonials = []
-      }
+      const stored = await apiService.get<Testimonial[]>('testimonials-data')
+      let testimonials: Testimonial[] = Array.isArray(stored) ? stored : []
 
       if (testimonial) {
-        // Update existing
         const index = testimonials.findIndex(t => t.id === testimonial.id)
         if (index !== -1) {
           testimonials[index] = formData
         }
       } else {
-        // Add new
         testimonials.push(formData)
       }
 
-      const success = await setContent('testimonials-data', JSON.stringify(testimonials))
+      const success = await apiService.set('testimonials-data', testimonials)
       if (success) {
+        window.dispatchEvent(new Event('testimonialsUpdated'))
         onSave()
       }
     } catch (error) {
       console.error('Failed to save testimonial:', error)
+    } finally {
+      hideLoading()
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">
-            {testimonial ? 'Edit Testimonial' : 'Add New Testimonial'}
-          </h3>
-          <Button onClick={onCancel} variant="ghost" size="sm">
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+    <Modal
+      isOpen={true}
+      onClose={onCancel}
+      title={testimonial ? 'Edit Testimonial' : 'Add New Testimonial'}
+      maxWidth="max-w-2xl"
+    >
+      <div className="p-6">
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -228,6 +218,6 @@ export function TestimonialForm({ testimonial, onSave, onCancel }: TestimonialFo
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }

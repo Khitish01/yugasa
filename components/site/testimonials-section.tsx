@@ -3,39 +3,30 @@
 import { motion } from "framer-motion"
 import { Star, Quote } from "lucide-react"
 import { FloatingParticles } from "@/components/ui/floating-particles"
+import { OptimizedImage } from "@/components/ui/optimized-image"
 import { useState, useEffect } from "react"
-import { loadTestimonials } from "@/lib/data-utils"
+import { apiService } from "@/lib/api-service"
+
+interface Testimonial {
+  id: string
+  name: string
+  role: string
+  content: string
+  rating: number
+  image: string
+}
 
 export default function TestimonialsSection() {
-  const [testimonials, setTestimonials] = useState([
-    {
-      name: "Rajesh Sharma",
-      role: "Homeowner",
-      content: "Yugasa Builders transformed our vision into reality. The attention to detail and quality of construction exceeded our expectations. Our dream home was delivered on time and within budget.",
-      rating: 5,
-      image: "/placeholder-user.jpg"
-    },
-    {
-      name: "Priya Patel",
-      role: "Property Developer", 
-      content: "Working with Yugasa has been exceptional. Their project management skills and commitment to quality make them our preferred construction partner for all residential developments.",
-      rating: 5,
-      image: "/placeholder-user.jpg"
-    },
-    {
-      name: "Amit Kumar",
-      role: "Business Owner",
-      content: "The commercial space Yugasa built for us perfectly balances functionality and aesthetics. Their team understood our business needs and delivered a space that enhances our operations.",
-      rating: 5,
-      image: "/placeholder-user.jpg"
-    }
-  ])
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [currentIndex, setCurrentIndex] = useState(1) // Start at 1 to show first testimonial in center
+  const [isResetting, setIsResetting] = useState(false)
+  
+  // Simple single testimonial display
 
   useEffect(() => {
     const loadTestimonialsData = async () => {
       try {
-        const testimonialsData = await loadTestimonials()
-        console.log('Loaded testimonials:', testimonialsData)
+        const testimonialsData = await apiService.get<Testimonial[]>('testimonials-data')
         if (testimonialsData && testimonialsData.length > 0) {
           setTestimonials(testimonialsData)
         }
@@ -46,21 +37,35 @@ export default function TestimonialsSection() {
 
     loadTestimonialsData()
 
-    // Listen for storage changes
     const handleStorageChange = () => {
+      apiService.clearCache('testimonials-data')
       loadTestimonialsData()
     }
 
-    window.addEventListener('storage', handleStorageChange)
-    
-    // Also listen for custom events for same-tab updates
     window.addEventListener('testimonialsUpdated', handleStorageChange)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('testimonialsUpdated', handleStorageChange)
-    }
+    return () => window.removeEventListener('testimonialsUpdated', handleStorageChange)
   }, [])
+
+  useEffect(() => {
+    if (testimonials.length <= 1) return
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => prev + 1)
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [testimonials.length])
+
+  // Reset position seamlessly when reaching the end
+  useEffect(() => {
+    if (currentIndex >= testimonials.length + 1) {
+      setIsResetting(true)
+      setTimeout(() => {
+        setCurrentIndex(1)
+        setTimeout(() => setIsResetting(false), 50)
+      }, 800) // Wait for animation to complete
+    }
+  }, [currentIndex, testimonials.length])
   return (
     <section className="relative py-16 md:py-24 bg-background overflow-hidden">
       <FloatingParticles count={10} />
@@ -79,41 +84,88 @@ export default function TestimonialsSection() {
           </p>
         </motion.div>
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((testimonial, index) => (
+        <div className="relative max-w-6xl mx-auto overflow-hidden">
+          <div className="py-8">
             <motion.div
-              key={testimonial.id || testimonial.name || index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="relative bg-card border rounded-xl p-6 hover:shadow-lg transition-shadow duration-300"
+              className="flex"
+              animate={{ x: `-${currentIndex * 33.333}%` }}
+              transition={{ 
+                duration: isResetting ? 0 : 0.8, 
+                ease: "easeInOut" 
+              }}
             >
-              <Quote className="w-8 h-8 text-primary/20 mb-4" />
-              
-              <div className="flex mb-4">
-                {[...Array(testimonial.rating || 5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
+              {[...testimonials, ...testimonials, ...testimonials].map((testimonial, index) => {
+                // Calculate which testimonial is in the center position (middle of 3 visible items)
+                const centerPosition = currentIndex + 1 // The center item in the visible trio
+                const isCenter = index === centerPosition
+                
+                return (
+                  <div key={index} className="w-1/3 shrink-0 px-4">
+                    <motion.div
+                      className="bg-card border rounded-xl p-6 h-full"
+                      animate={{
+                        scale: isCenter ? 1.05 : 0.95,
+                        opacity: isCenter ? 1 : 0.7
+                      }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                    >
+                      <Quote className={`text-primary/20 mb-4 ${
+                        isCenter ? 'w-10 h-10 mx-auto' : 'w-8 h-8'
+                      }`} />
+                      
+                      <div className={`flex mb-4 ${
+                        isCenter ? 'justify-center' : ''
+                      }`}>
+                        {[...Array(testimonial.rating || 5)].map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
 
-              <p className="text-muted-foreground mb-6 leading-relaxed">
-                "{testimonial.content}"
-              </p>
+                      <p className={`text-muted-foreground mb-6 leading-relaxed ${
+                        isCenter ? 'text-center text-base' : 'text-sm'
+                      }`}>
+                        "{testimonial.content}"
+                      </p>
 
-              <div className="flex items-center gap-3">
-                <img
-                  src={testimonial.image}
-                  alt={testimonial.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <h4 className="font-semibold">{testimonial.name}</h4>
-                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                </div>
-              </div>
+                      <div className={`flex items-center gap-3 ${
+                        isCenter ? 'justify-center gap-4' : ''
+                      }`}>
+                        <OptimizedImage
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className={isCenter ? 'w-14 h-14 rounded-full' : 'w-12 h-12 rounded-full'}
+                          width={isCenter ? 56 : 48}
+                          height={isCenter ? 56 : 48}
+                        />
+                        <div className={isCenter ? 'text-center' : ''}>
+                          <h4 className={`font-semibold ${
+                            isCenter ? 'text-lg' : 'text-base'
+                          }`}>{testimonial.name}</h4>
+                          <p className={`text-muted-foreground ${
+                            isCenter ? '' : 'text-sm'
+                          }`}>{testimonial.role}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                )
+              })}
             </motion.div>
-          ))}
+          </div>
+          
+          {testimonials.length > 1 && (
+            <div className="flex justify-center mt-8 gap-2">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index + 1)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    (currentIndex - 1) % testimonials.length === index ? 'bg-primary' : 'bg-primary/30'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

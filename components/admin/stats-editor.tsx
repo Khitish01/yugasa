@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { getContent, setContent } from '@/lib/admin'
 import { Button } from '@/components/ui/button'
 import { Plus, X } from 'lucide-react'
+import { useLoading } from '@/contexts/loading-context'
 
 interface Stat {
   label: string
@@ -17,9 +18,11 @@ export function StatsEditor() {
     { label: "Projects Delivered", value: 75, suffix: "+" },
     { label: "Happy Families", value: 1200, suffix: "+" }
   ])
+  const { startLoading, hideLoading } = useLoading()
 
   useEffect(() => {
     const loadStats = async () => {
+      startLoading()
       try {
         const stored = await getContent('stats-data')
         if (stored) {
@@ -36,6 +39,8 @@ export function StatsEditor() {
         }
       } catch (e) {
         console.error('Failed to load stats:', e)
+      } finally {
+        hideLoading()
       }
     }
     

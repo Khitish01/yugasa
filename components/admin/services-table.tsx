@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { getContent, setContent } from '@/lib/admin'
+import { setContent } from '@/lib/admin'
 import { Button } from '@/components/ui/button'
 import { Plus, Edit, Trash2, Building2, Home, Wrench, Users } from 'lucide-react'
+import { useLoading } from '@/contexts/loading-context'
 
 interface Service {
   id: string
@@ -15,9 +15,10 @@ interface Service {
 }
 
 interface ServicesTableProps {
+  services?: Service[]
   onEdit: (service: Service) => void
   onAdd: () => void
-  refreshTrigger?: number
+  onDataChange?: () => void
 }
 
 const iconMap = {
@@ -27,94 +28,29 @@ const iconMap = {
   'Users': Users
 }
 
-export function ServicesTable({ onEdit, onAdd, refreshTrigger }: ServicesTableProps) {
-  const [services, setServices] = useState<Service[]>([])
+export function ServicesTable({ services = [], onEdit, onAdd, onDataChange }: ServicesTableProps) {
+  const { startLoading, hideLoading } = useLoading()
 
-  useEffect(() => {
-    loadServices()
-  }, [refreshTrigger])
 
-  const loadServices = async () => {
-    try {
-      const stored = await getContent('services-data')
-      if (stored) {
-        let parsedServices
-        try {
-          parsedServices = JSON.parse(stored)
-        } catch {
-          parsedServices = stored
-        }
-        if (Array.isArray(parsedServices)) {
-          const servicesWithIds = parsedServices.map((s, index) => ({
-            ...s,
-            id: s.id || `service-${index}`
-          }))
-          setServices(servicesWithIds)
-        } else {
-          console.error('Invalid services data format')
-          setDefaultServices()
-        }
-      } else {
-        setDefaultServices()
-      }
-    } catch (e) {
-      console.error('Failed to load services data:', e)
-      setDefaultServices()
-    }
-  }
-
-  const setDefaultServices = async () => {
-    const defaultServices = [
-      {
-        id: 'service-1',
-        title: "Commercial Construction",
-        description: "Modern commercial spaces",
-        detailedDescription: "Office buildings, retail spaces, and mixed-use developments with modern amenities and cutting-edge design.",
-        image: "/commercial-building-glass.jpg",
-        icon: "Building2",
-        features: ["Office Buildings", "Retail Spaces", "Mixed-Use Developments", "Corporate Interiors"]
-      },
-      {
-        id: 'service-2',
-        title: "Residential Projects",
-        description: "Luxury homes and communities",
-        detailedDescription: "Luxury homes, apartments, and villa communities designed for modern living with premium amenities and contemporary architecture.",
-        image: "/modern-luxury-residence-exterior.jpg",
-        icon: "Home",
-        features: ["Custom Home Design", "Apartment Complexes", "Villa Communities", "Interior Design"]
-      },
-      {
-        id: 'service-3',
-        title: "Redevelopment",
-        description: "Modern sustainable transformations",
-        detailedDescription: "Transforming existing structures into contemporary, sustainable spaces with enhanced functionality and modern design principles.",
-        image: "/urban-redevelopment-aerial-construction.jpg",
-        icon: "Wrench",
-        features: ["Society Redevelopment", "Heritage Restoration", "Urban Renewal", "Infrastructure Upgrade"]
-      },
-      {
-        id: 'service-4',
-        title: "Project Management",
-        description: "Complete project oversight",
-        detailedDescription: "End-to-end project oversight ensuring quality, timeline, and budget adherence with experienced project management teams.",
-        image: "/construction-manager.jpg",
-        icon: "Users",
-        features: ["Quality Assurance", "Timeline Management", "Budget Control", "Team Coordination"]
-      }
-    ]
-    setServices(defaultServices)
-    await setContent('services-data', JSON.stringify(defaultServices))
-  }
 
   const deleteService = async (id: string) => {
     if (services.length > 1) {
-      const newServices = services.filter(s => s.id !== id)
-      const success = await setContent('services-data', JSON.stringify(newServices))
-      if (success) {
-        setServices(newServices)
-        window.dispatchEvent(new CustomEvent('servicesUpdated'))
-      } else {
-        console.error('Failed to delete service')
+      startLoading()
+      try {
+        const newServices = services.filter(s => s.id !== id)
+        const success = await setContent('services-data', JSON.stringify(newServices))
+        if (success) {
+          window.dispatchEvent(new CustomEvent('servicesUpdated'))
+          if (onDataChange) {
+            onDataChange()
+          }
+        } else {
+          console.error('Failed to delete service')
+        }
+      } catch (error) {
+        console.error('Failed to delete service:', error)
+      } finally {
+        hideLoading()
       }
     }
   }

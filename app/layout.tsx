@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { Playfair_Display, Inter } from "next/font/google"
 import "./globals.css"
 import { ConditionalLayout } from "@/components/conditional-layout"
+import { Providers } from "@/components/providers"
+import { DataPreloader } from "@/components/ui/data-preloader"
 
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
@@ -26,7 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${playfair.variable} ${inter.variable} font-sans antialiased`}>
-        <ConditionalLayout>{children}</ConditionalLayout>
+        <Providers>
+          <DataPreloader keys={['testimonials-data', 'services-data', 'stats-data']} />
+          <ConditionalLayout>{children}</ConditionalLayout>
+        </Providers>
       </body>
     </html>
   )

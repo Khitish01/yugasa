@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { getContent, setContent } from '@/lib/admin'
 import { Button } from '@/components/ui/button'
 import { Upload, Edit, Trash2, Plus } from 'lucide-react'
 import { newsItems } from '@/lib/news-data'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
+import { Modal } from '@/components/ui/modal'
+import { useLoading } from '@/contexts/loading-context'
 
 interface NewsItem {
   id: string
@@ -28,9 +29,11 @@ export function NewsEditor() {
   const [uploading, setUploading] = useState(false)
   const [newTag, setNewTag] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { startLoading, hideLoading } = useLoading()
 
   useEffect(() => {
     const loadNews = async () => {
+      startLoading()
       try {
         const response = await fetch('/api/data?key=news-data')
         if (response.ok) {
@@ -45,6 +48,8 @@ export function NewsEditor() {
         }
       } catch (e) {
         setNews(newsItems)
+      } finally {
+        hideLoading()
       }
     }
     loadNews()
@@ -99,16 +104,17 @@ export function NewsEditor() {
   const updateNews = async () => {
     if (!editingNews) return
     
-    let updatedNews
-    const existingIndex = news.findIndex(n => n.id === editingNews.id)
-    if (existingIndex >= 0) {
-      updatedNews = [...news]
-      updatedNews[existingIndex] = editingNews
-    } else {
-      updatedNews = [...news, editingNews]
-    }
-    
+    startLoading()
     try {
+      let updatedNews
+      const existingIndex = news.findIndex(n => n.id === editingNews.id)
+      if (existingIndex >= 0) {
+        updatedNews = [...news]
+        updatedNews[existingIndex] = editingNews
+      } else {
+        updatedNews = [...news, editingNews]
+      }
+      
       const response = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,13 +128,16 @@ export function NewsEditor() {
       }
     } catch (error) {
       console.error('Failed to save news:', error)
+    } finally {
+      hideLoading()
     }
   }
 
   const deleteNews = async (id: string) => {
-    const updatedNews = news.filter(n => n.id !== id)
-    
+    startLoading()
     try {
+      const updatedNews = news.filter(n => n.id !== id)
+      
       const response = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -141,6 +150,8 @@ export function NewsEditor() {
       }
     } catch (error) {
       console.error('Failed to delete news:', error)
+    } finally {
+      hideLoading()
     }
   }
 
@@ -210,12 +221,14 @@ export function NewsEditor() {
         </div>
       </div>
 
-      {editingNews && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">
-              {news.find(n => n.id === editingNews.id) ? 'Edit Article' : 'Add Article'}
-            </h3>
+      <Modal
+        isOpen={!!editingNews}
+        onClose={() => setEditingNews(null)}
+        title={news.find(n => n.id === editingNews?.id) ? 'Edit Article' : 'Add Article'}
+        maxWidth="max-w-2xl"
+      >
+        {editingNews && (
+          <div className="p-6">
             
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -397,8 +410,8 @@ export function NewsEditor() {
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   )
 }

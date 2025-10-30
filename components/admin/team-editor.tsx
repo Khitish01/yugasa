@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload, Edit, Trash2, Plus, Linkedin, Mail } from "lucide-react"
-import { setContent, getContent } from "@/lib/admin"
+import { setContent } from "@/lib/admin"
+import { Modal } from "@/components/ui/modal"
+import { useLoading } from "@/contexts/loading-context"
 
 interface TeamMember {
   id: string
@@ -72,30 +74,19 @@ const defaultTeam: TeamMember[] = [
   }
 ]
 
-export function TeamEditor() {
-  const [team, setTeam] = useState<TeamMember[]>(defaultTeam)
+interface TeamEditorProps {
+  team?: TeamMember[]
+  onDataChange?: () => void
+}
+
+export function TeamEditor({ team = defaultTeam, onDataChange }: TeamEditorProps) {
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    const loadTeam = async () => {
-      try {
-        const response = await fetch('/api/data?key=team-members')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data && Array.isArray(result.data)) {
-            setTeam(result.data)
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load team data:', e)
-      }
-    }
-    loadTeam()
-  }, [])
+  const { startLoading, hideLoading } = useLoading()
 
   const saveTeam = async (updatedTeam: TeamMember[]) => {
+    startLoading()
     try {
       const response = await fetch('/api/data', {
         method: 'POST',
@@ -104,11 +95,15 @@ export function TeamEditor() {
       })
       
       if (response.ok) {
-        setTeam(updatedTeam)
         window.dispatchEvent(new CustomEvent('teamUpdated'))
+        if (onDataChange) {
+          onDataChange()
+        }
       }
     } catch (error) {
       console.error('Failed to save team data:', error)
+    } finally {
+      hideLoading()
     }
   }
 
@@ -251,12 +246,14 @@ export function TeamEditor() {
         </div>
       </div>
 
-      {editingMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">
-              {team.find(m => m.id === editingMember.id) ? 'Edit Team Member' : 'Add Team Member'}
-            </h3>
+      <Modal
+        isOpen={!!editingMember}
+        onClose={() => setEditingMember(null)}
+        title={team.find(m => m.id === editingMember?.id) ? 'Edit Team Member' : 'Add Team Member'}
+        maxWidth="max-w-2xl"
+      >
+        {editingMember && (
+          <div className="p-6">
             
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -352,8 +349,8 @@ export function TeamEditor() {
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { OptimizedImage } from '@/components/ui/optimized-image'
 import { getContent, setContent } from '@/lib/admin'
 
 interface EditableImageProps {
@@ -50,10 +51,16 @@ export function EditableImage({ id, className, defaultSrc }: EditableImageProps)
 
   return (
     <div
-      className={`${className} cursor-pointer hover:opacity-80 transition-opacity`}
-      style={{ backgroundImage: `url('${imageSrc}')` }}
+      className={`${className} cursor-pointer hover:opacity-80 transition-opacity relative overflow-hidden`}
       onDoubleClick={handleDoubleClick}
       title="Double click to edit image"
-    />
+    >
+      <OptimizedImage
+        src={imageSrc}
+        alt="Editable image"
+        className="w-full h-full"
+        fill
+      />
+    </div>
   )
 }

@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { getContent, setContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { Button } from '@/components/ui/button'
-import { X, Plus, Trash2, Upload } from 'lucide-react'
+import { Plus, Trash2, Upload } from 'lucide-react'
+import { Modal } from '@/components/ui/modal'
+import { useLoading } from '@/contexts/loading-context'
 
 interface Service {
   id: string
@@ -85,42 +87,34 @@ export function ServiceForm({ service, onSave, onCancel }: ServiceFormProps) {
     }
   }
 
+  const { startLoading, hideLoading } = useLoading()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    startLoading()
     try {
-      const stored = await getContent('services-data')
-      let services: Service[] = []
-      
-      if (stored) {
-        try {
-          services = JSON.parse(stored)
-        } catch {
-          services = stored
-        }
-      }
-      
-      if (!Array.isArray(services)) {
-        services = []
-      }
+      const stored = await apiService.get<Service[]>('services-data')
+      let services: Service[] = Array.isArray(stored) ? stored : []
 
       if (service) {
-        // Update existing
         const index = services.findIndex(s => s.id === service.id)
         if (index !== -1) {
           services[index] = formData
         }
       } else {
-        // Add new
         services.push(formData)
       }
 
-      const success = await setContent('services-data', JSON.stringify(services))
+      const success = await apiService.set('services-data', services)
       if (success) {
+        window.dispatchEvent(new Event('servicesUpdated'))
         onSave()
       }
     } catch (error) {
       console.error('Failed to save service:', error)
+    } finally {
+      hideLoading()
     }
   }
 
@@ -143,16 +137,13 @@ export function ServiceForm({ service, onSave, onCancel }: ServiceFormProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">
-            {service ? 'Edit Service' : 'Add New Service'}
-          </h3>
-          <Button onClick={onCancel} variant="ghost" size="sm">
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+    <Modal
+      isOpen={true}
+      onClose={onCancel}
+      title={service ? 'Edit Service' : 'Add New Service'}
+      maxWidth="max-w-3xl"
+    >
+      <div className="p-6">
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -288,6 +279,6 @@ export function ServiceForm({ service, onSave, onCancel }: ServiceFormProps) {
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }

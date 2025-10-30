@@ -22,7 +22,7 @@ import StatsComponent from "@/components/site/stats"
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      <div className="h-screen flex flex-col">
+      <div className="h-[calc(100vh-4rem)] flex flex-col">
         <HeroLuxe />
         {/* <SearchSection /> */}
       </div>
