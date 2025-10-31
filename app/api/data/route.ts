@@ -10,9 +10,8 @@ const VALID_KEYS = [
   'team-hero-bg', 'typewriter-texts', 'stats-data', 'social-links'
 ]
 
-// In-memory cache
+// In-memory cache (infinite until invalidated)
 const memoryCache = new Map<string, { data: any; ts: number }>()
-const TTL = 600000
 
 function validateKey(key: string) {
   return VALID_KEYS.includes(key)
@@ -20,7 +19,7 @@ function validateKey(key: string) {
 
 async function getCached(key: string) {
   const item = memoryCache.get(key)
-  if (item && Date.now() - item.ts < TTL) return item.data
+  if (item) return item.data
   const data = await databaseService.get(key)
   memoryCache.set(key, { data, ts: Date.now() })
   return data
