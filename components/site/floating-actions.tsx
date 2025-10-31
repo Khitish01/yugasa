@@ -7,8 +7,21 @@ import { Phone, MessageCircle, ArrowUp } from "lucide-react"
 
 export function FloatingActions() {
   const [isScrolled, setIsScrolled] = useState(false)
-  const phone = "910000000000" // change: country code + number, no symbols
-  const displayPhone = "+91 00000 00000"
+  const [phone, setPhone] = useState("910000000000")
+  const [displayPhone, setDisplayPhone] = useState("+91 00000 00000")
+
+  useEffect(() => {
+    fetch('/api/contact-info')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.contactInfo?.phones?.mainOffice) {
+          const mainOffice = data.contactInfo.phones.mainOffice
+          setDisplayPhone(mainOffice)
+          setPhone(mainOffice.replace(/[^0-9]/g, ''))
+        }
+      })
+      .catch(console.error)
+  }, [])
   const waHref = `https://wa.me/${phone}?text=${encodeURIComponent("Hello, I’m interested in your projects.")}`
   const telHref = `tel:${displayPhone.replace(/[^+\d]/g, "")}`
 
