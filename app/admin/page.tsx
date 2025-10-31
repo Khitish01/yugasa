@@ -13,6 +13,9 @@ import { PortfolioSection } from "@/components/admin/sections/portfolio-section"
 import { NewsSection } from "@/components/admin/sections/news-section"
 import { TeamSection } from "@/components/admin/sections/team-section"
 import { PreviewSection } from "@/components/admin/sections/preview-section"
+import { BookingsViewer } from "@/components/admin/bookings-viewer"
+import { ContactsViewer } from "@/components/admin/contacts-viewer"
+import { ContactInfoEditor } from "@/components/admin/contact-info-editor"
 
 interface Testimonial {
   id: string
@@ -83,6 +86,15 @@ export default function AdminPage() {
       
       case 'team':
         return <TeamSection />
+      
+      case 'bookings':
+        return <BookingsViewer />
+      
+      case 'contacts':
+        return <ContactsViewer />
+      
+      case 'contactInfo':
+        return <ContactInfoEditor />
       
       case 'preview':
         return <PreviewSection />

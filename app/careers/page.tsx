@@ -11,7 +11,7 @@ export default function CareersPage() {
         eyebrow="Careers"
         title="Build With Us"
         subtitle="Join a team that values craft, clarity, and on-time delivery."
-        imageSrc="/meeting-room-boardroom.jpg"
+        imageSrc="/construction-site-luxury-lobby.jpg"
       />
       <SectionPage title="Careers" description="Join Yugasa Builders and shape the future of urban living.">
         <Reveal>

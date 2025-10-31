@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { Facebook, Instagram, Linkedin, Twitter, Youtube, Phone } from "lucide-react"
+import { Facebook, Instagram, Linkedin, Twitter, Phone, Youtube } from "lucide-react"
+import { BookingForm } from "./booking-form"
 
 export function SiteFooter() {
   return (
@@ -41,19 +42,28 @@ export function SiteFooter() {
             </div>
           </div>
 
-          {/* Contact */}
+          {/* Contact & Careers */}
           <div>
             <h3 className="text-lg mb-6">Contact Us</h3>
-            <div className="space-y-4">
+            <div className="space-y-4 mb-8">
               <p className="text-gray-300">(+91) 00000-00000</p>
               <Link href="mailto:hello@yugasa.builders" className="text-gray-300 hover:text-white transition-colors underline">
                 hello@yugasa.builders
               </Link>
             </div>
+            
+            <h3 className="text-lg mb-4">Careers</h3>
+            <p className="text-gray-300 mb-3">Join our team and build the future</p>
+            <Link href="/careers" className="text-white hover:text-gray-300 transition-colors underline">
+              View Open Positions →
+            </Link>
           </div>
 
-          {/* Newsletter */}
-          <div>
+          {/* Book Appointment */}
+          <BookingForm />
+          
+          {/* Newsletter - Commented */}
+          {/* <div>
             <h2 className="text-2xl font-light mb-6 tracking-wide">NEWSLETTER</h2>
             <p className="text-gray-300 mb-6">
               Subscribe to our Newsletter for latest news and updates. Stay tuned!
@@ -86,7 +96,7 @@ export function SiteFooter() {
                 SUBSCRIBE
               </button>
             </form>
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom */}

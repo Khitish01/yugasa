@@ -10,62 +10,75 @@ const VALID_KEYS = [
   'team-hero-bg', 'typewriter-texts', 'stats-data', 'social-links'
 ]
 
-function validateKey(key: string): boolean {
+// In-memory cache
+const memoryCache = new Map<string, { data: any; ts: number }>()
+const TTL = 600000
+
+function validateKey(key: string) {
   return VALID_KEYS.includes(key)
+}
+
+async function getCached(key: string) {
+  const item = memoryCache.get(key)
+  if (item && Date.now() - item.ts < TTL) return item.data
+  const data = await databaseService.get(key)
+  memoryCache.set(key, { data, ts: Date.now() })
+  return data
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const key = searchParams.get('key')
   const keys = searchParams.get('keys')
-  
-  // Handle batch requests
+  const key = searchParams.get('key')
+
   if (keys) {
     const keyList = keys.split(',').filter(k => validateKey(k.trim()))
     if (keyList.length === 0) {
       return NextResponse.json({ error: 'No valid keys provided' }, { status: 400 })
     }
-    
-    try {
-      const results: Record<string, any> = {}
-      await Promise.all(
-        keyList.map(async (k) => {
-          results[k] = await databaseService.get(k)
-        })
-      )
-      return NextResponse.json({ data: results })
-    } catch (error) {
-      console.error('Batch GET Error:', error)
-      return NextResponse.json({ error: 'Failed to read batch data' }, { status: 500 })
-    }
+
+    const results: Record<string, any> = {}
+    await Promise.all(
+      keyList.map(async (k) => {
+        results[k] = await getCached(k)
+      })
+    )
+
+    return NextResponse.json({ data: results }, {
+      headers: { 'Cache-Control': 'public, max-age=600, stale-while-revalidate=86400' },
+    })
   }
-  
-  // Handle single requests
+
   if (!key || !validateKey(key)) {
-    return NextResponse.json({ error: 'Invalid key parameter' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid key' }, { status: 400 })
   }
 
   try {
-    const result = await databaseService.get(key)
-    return NextResponse.json({ data: result })
-  } catch (error) {
-    console.error('GET Error:', error)
-    return NextResponse.json({ error: 'Failed to read data' }, { status: 500 })
+    const data = await getCached(key)
+    return NextResponse.json({ data }, {
+      headers: { 'Cache-Control': 'public, max-age=600, stale-while-revalidate=86400' },
+    })
+  } catch (e) {
+    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const { key, data } = await request.json()
-    
+
     if (!key || !validateKey(key) || data === undefined) {
       return NextResponse.json({ error: 'Invalid key or missing data' }, { status: 400 })
     }
 
     const success = await databaseService.set(key, data)
-    
+
     if (success) {
-      return NextResponse.json({ success: true })
+      // Clear cache for this key
+      memoryCache.delete(key)
+      
+      // Return updated data immediately
+      return NextResponse.json({ success: true, data })
     } else {
       return NextResponse.json({ error: 'Failed to save data' }, { status: 500 })
     }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { Home, Settings, Image, Type, Eye, MessageSquare, Briefcase, FolderOpen, Newspaper, Users } from 'lucide-react'
+import { Home, Settings, Image, Type, Eye, MessageSquare, Briefcase, FolderOpen, Newspaper, Users, Calendar, Mail, Info } from 'lucide-react'
 
 interface AdminSidebarProps {
   activeSection: string
@@ -16,6 +16,9 @@ export function AdminSidebar({ activeSection, onSectionChange }: AdminSidebarPro
     { id: 'portfolio', label: 'Portfolio', icon: FolderOpen },
     { id: 'news', label: 'News', icon: Newspaper },
     { id: 'team', label: 'Team', icon: Users },
+    { id: 'bookings', label: 'Bookings', icon: Calendar },
+    { id: 'contacts', label: 'Contacts', icon: Mail },
+    { id: 'contactInfo', label: 'Contact Info', icon: Info },
     { id: 'preview', label: 'Preview Site', icon: Eye },
   ]
 

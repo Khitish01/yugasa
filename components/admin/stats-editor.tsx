@@ -67,19 +67,25 @@ export function StatsEditor() {
     } else {
       newStats[index][field] = value as string
     }
-    saveStats(newStats)
+    setStats(newStats)
   }
 
   const removeStat = (index: number) => {
     if (stats.length > 1) {
       const newStats = stats.filter((_, i) => i !== index)
-      saveStats(newStats)
+      setStats(newStats)
     }
   }
 
   const addStat = () => {
     const newStats = [...stats, { label: "New Stat", value: 0, suffix: "+" }]
-    saveStats(newStats)
+    setStats(newStats)
+  }
+
+  const handleUpdate = async () => {
+    startLoading()
+    await saveStats(stats)
+    hideLoading()
   }
 
   return (
@@ -145,6 +151,12 @@ export function StatsEditor() {
           Add Statistic
         </Button>
       </div>
+      <Button
+        onClick={handleUpdate}
+        className="mt-4 w-full"
+      >
+        Update Statistics
+      </Button>
     </div>
   )
 }

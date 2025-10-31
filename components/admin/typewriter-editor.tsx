@@ -53,19 +53,25 @@ export function TypewriterEditor() {
   const updateWord = (index: number, newWord: string) => {
     const newWords = [...words]
     newWords[index] = newWord.toUpperCase()
-    saveWords(newWords)
+    setWords(newWords)
   }
 
   const removeWord = (index: number) => {
     if (words.length > 1) {
       const newWords = words.filter((_, i) => i !== index)
-      saveWords(newWords)
+      setWords(newWords)
     }
   }
 
   const addWord = () => {
     const newWords = [...words, 'NEW WORD']
-    saveWords(newWords)
+    setWords(newWords)
+  }
+
+  const handleUpdate = async () => {
+    startLoading()
+    await saveWords(words)
+    hideLoading()
   }
 
   return (
@@ -102,6 +108,12 @@ export function TypewriterEditor() {
           Add Word
         </Button>
       </div>
+      <Button
+        onClick={handleUpdate}
+        className="mt-4 w-full"
+      >
+        Update Typewriter Words
+      </Button>
     </div>
   )
 }

@@ -1,33 +1,31 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { useState, useEffect } from "react"
 import { MapPin, Phone, Mail, Clock } from "lucide-react"
+import { ContactForm } from "@/components/site/contact-form"
+
+interface ContactInfo {
+  phones: { mainOffice: string; projectEnquiries: string }
+  emails: { general: string; projects: string; careers: string }
+  address: { company: string; street: string; area: string; city: string; state: string }
+  businessHours: { weekdays: string; saturday: string; sunday: string; note?: string }
+  mapUrl?: string
+}
 
 export default function CTASection() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: ''
-  })
+  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log('Form submitted:', formData)
-    // Handle form submission here
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
+  useEffect(() => {
+    fetch('/api/contact-info')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setContactInfo(data.contactInfo)
+        }
+      })
+      .catch(console.error)
+  }, [])
 
   return (
     <section className="relative py-16 md:py-24 overflow-hidden">
@@ -39,7 +37,7 @@ export default function CTASection() {
         aria-hidden="true"
       />
       <div
-        className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70"
+        className="absolute inset-0 bg-linear-to-r from-primary/90 to-primary/70"
         aria-hidden="true"
       />
       <div className="relative container mx-auto px-4">
@@ -66,69 +64,7 @@ export default function CTASection() {
             className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-8 shadow-xl"
           >
             <h3 className="text-2xl font-semibold mb-6 text-white">Send us a Message</h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-white">Full Name *</label>
-                  <Input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Your full name"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-white">Phone Number *</label>
-                  <Input
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="Your phone number"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2 text-white">Email Address *</label>
-                <Input
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="your.email@example.com"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2 text-white">Subject</label>
-                <Input
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  placeholder="Project inquiry, consultation, etc."
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2 text-white">Message *</label>
-                <Textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  placeholder="Tell us about your project requirements..."
-                  rows={5}
-                  required
-                />
-              </div>
-              
-              <Button type="submit" className="w-full" size="lg">
-                Send Message
-              </Button>
-            </form>
+            <ContactForm />
           </motion.div>
 
           {/* Map and Contact Info */}
@@ -144,39 +80,43 @@ export default function CTASection() {
               <h3 className="text-2xl font-semibold mb-6 text-white">Contact Information</h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
-                  <MapPin className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                  <MapPin className="w-5 h-5 text-white mt-1 shrink-0" />
                   <div>
                     <h4 className="font-medium text-white">Head Office</h4>
                     <p className="text-white/80">
-                      123 Business District, Bandra Kurla Complex,<br />
-                      Mumbai, Maharashtra 400051, India
+                      {contactInfo?.address?.company}<br />
+                      {contactInfo?.address?.street}<br />
+                      {contactInfo?.address?.area}<br />
+                      {contactInfo?.address?.city}<br />
+                      {contactInfo?.address?.state}
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-4">
-                  <Phone className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                  <Phone className="w-5 h-5 mt-1 shrink-0 text-white" />
                   <div>
                     <h4 className="font-medium text-white">Phone</h4>
-                    <p className="text-white/80">+91 98765 43210</p>
+                    <p className="text-white/80">{contactInfo?.phones?.mainOffice}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-4">
-                  <Mail className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                  <Mail className="w-5 h-5 text-white mt-1 shrink-0" />
                   <div>
                     <h4 className="font-medium text-white">Email</h4>
-                    <p className="text-white/80">info@yugasabuilders.com</p>
+                    <p className="text-white/80">{contactInfo?.emails?.general}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-4">
-                  <Clock className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                  <Clock className="w-5 h-5 text-white mt-1 shrink-0" />
                   <div>
                     <h4 className="font-medium text-white">Business Hours</h4>
                     <p className="text-white/80">
-                      Mon - Sat: 9:00 AM - 6:00 PM<br />
-                      Sunday: Closed
+                      Mon - Fri: {contactInfo?.businessHours?.weekdays}<br />
+                      Sat: {contactInfo?.businessHours?.saturday}<br />
+                      Sun: {contactInfo?.businessHours?.sunday}
                     </p>
                   </div>
                 </div>
@@ -186,16 +126,18 @@ export default function CTASection() {
             {/* Map */}
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden shadow-xl">
               <div className="h-80">
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3770.8267739788894!2d72.86311931490314!3d19.063009987094707!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c8c2b1234567%3A0x1234567890abcdef!2sBandra%20Kurla%20Complex%2C%20Bandra%20East%2C%20Mumbai%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1234567890123!5m2!1sen!2sin"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Yugasa Builders Head Office Location"
-                />
+                {contactInfo?.mapUrl && (
+                  <iframe
+                    src={contactInfo.mapUrl}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Office Location"
+                  />
+                )}
               </div>
             </div>
           </motion.div>

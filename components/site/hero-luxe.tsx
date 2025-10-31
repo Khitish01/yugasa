@@ -2,7 +2,14 @@
 
 import { motion, useScroll, useTransform } from "framer-motion"
 import { useRef, useState, useEffect } from "react"
-import { getContent } from "@/lib/admin"
+import { apiService } from "@/lib/api-service"
+
+interface HeroContent {
+  title?: string
+  subtitle?: string
+  description?: string
+  background?: string
+}
 
 export default function HeroLuxe() {
   const ref = useRef(null)
@@ -12,39 +19,39 @@ export default function HeroLuxe() {
   })
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"])
   const opacity = useTransform(scrollYProgress, [0, 1], [1, 0.3])
-  
+
   const [displayText, setDisplayText] = useState("")
   const [wordIndex, setWordIndex] = useState(0)
-  const [heroContent, setHeroContent] = useState({
-    title: "CONSTRUCTION",
-    subtitle: "EXCLUSIVE",
-    description: "YUGASA BUILDERS | MUMBAI | INDIA",
-    background: "/luxury-construction-interior-lobby-with-wood-panel.jpg"
+  const [heroContent, setHeroContent] = useState<HeroContent>({
+    // title: "CONSTRUCTION",
+    // subtitle: "EXCLUSIVE",
+    // description: "YUGASA BUILDERS | MUMBAI | INDIA",
+    // background: "/luxury-construction-interior-lobby-with-wood-panel.jpg"
   })
-  const [words, setWords] = useState(["CONSTRUCTION", "INNOVATION", "EXCELLENCE", "PRECISION"])
-  
+  const [words, setWords] = useState<any[]>([])
+
   useEffect(() => {
     const loadContent = async () => {
       try {
-        const [subtitleRes, descriptionRes, backgroundRes, typewriterRes] = await Promise.all([
-          fetch('/api/data?key=hero-subtitle'),
-          fetch('/api/data?key=hero-description'),
-          fetch('/api/data?key=hero-background'),
-          fetch('/api/data?key=typewriter-texts')
+        const data = await apiService.getBatch<string | string[]>([
+          'hero-subtitle',
+          'hero-description',
+          'hero-background',
+          'typewriter-texts'
         ])
-        
-        const subtitle = subtitleRes.ok ? (await subtitleRes.json()).data : null
-        const description = descriptionRes.ok ? (await descriptionRes.json()).data : null
-        const background = backgroundRes.ok ? (await backgroundRes.json()).data : null
-        const typewriterWords = typewriterRes.ok ? (await typewriterRes.json()).data : null
-        
+
+        const subtitle = data['hero-subtitle'] as string
+        const description = data['hero-description'] as string
+        const background = data['hero-background'] as string
+        const typewriterWords = data['typewriter-texts'] as string[]
+
         setHeroContent({
-          title: "CONSTRUCTION",
+          title: typewriterWords?.[0] || "CONSTRUCTION",
           subtitle: subtitle || "EXCLUSIVE",
           description: description || "YUGASA BUILDERS | MUMBAI | INDIA",
           background: background || "/luxury-construction-interior-lobby-with-wood-panel.jpg"
         })
-        
+
         if (typewriterWords && Array.isArray(typewriterWords)) {
           setWords(typewriterWords)
         }
@@ -52,26 +59,26 @@ export default function HeroLuxe() {
         console.error('Failed to load hero content:', error)
       }
     }
-    
+
     loadContent()
   }, [])
 
   useEffect(() => {
     if (!words || words.length === 0) return
-    
+
     let interval: NodeJS.Timeout
     let timeout: NodeJS.Timeout
-    
+
     const startAnimation = () => {
       const word = words[wordIndex] || words[0] || "CONSTRUCTION"
       let charIndex = 0
       let isTyping = true
-      
+
       interval = setInterval(() => {
         if (isTyping) {
           setDisplayText(word.slice(0, charIndex + 1))
           charIndex++
-          
+
           if (charIndex >= word.length) {
             isTyping = false
             timeout = setTimeout(() => {
@@ -81,7 +88,7 @@ export default function HeroLuxe() {
         } else {
           setDisplayText(word.slice(0, charIndex))
           charIndex--
-          
+
           if (charIndex < 0) {
             clearInterval(interval)
             setTimeout(() => {
@@ -91,9 +98,9 @@ export default function HeroLuxe() {
         }
       }, isTyping ? 120 : 80)
     }
-    
+
     const initialDelay = setTimeout(startAnimation, 1000)
-    
+
     return () => {
       clearInterval(interval)
       clearTimeout(timeout)
@@ -126,7 +133,7 @@ export default function HeroLuxe() {
           transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
           className="max-w-3xl"
         >
-          <motion.p 
+          <motion.p
             className="text-white/90 text-sm font-medium tracking-[0.2em] uppercase mb-6"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -134,7 +141,7 @@ export default function HeroLuxe() {
           >
             {heroContent.subtitle}
           </motion.p>
-          <motion.h1 
+          <motion.h1
             className="text-5xl md:text-7xl lg:text-8xl font-playfair font-light text-white tracking-widest leading-none"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -148,7 +155,7 @@ export default function HeroLuxe() {
             animate={{ width: 128 }}
             transition={{ duration: 0.8, delay: 1.2 }}
           />
-          <motion.p 
+          <motion.p
             className="text-white/80 text-sm tracking-wide uppercase"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

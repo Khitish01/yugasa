@@ -18,6 +18,7 @@ import TestimonialsSection from "@/components/site/testimonials-section"
 import ProcessSection from "@/components/site/process-section"
 import CTASection from "@/components/site/cta-section"
 import StatsComponent from "@/components/site/stats"
+import { ContactForm } from "@/components/site/contact-form"
 
 export default function HomePage() {
   return (
@@ -95,8 +96,6 @@ export default function HomePage() {
 
       {/* Testimonials */}
       <TestimonialsSection />
-
-
 
       {/* Enhanced CTA section */}
       <CTASection />

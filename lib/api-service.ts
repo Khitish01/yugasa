@@ -169,7 +169,12 @@ class ApiService {
         body: JSON.stringify({ key, data })
       })
       
-      return response.ok
+      if (response.ok) {
+        // Clear local cache for this key to force fresh fetch
+        this.cache.delete(key)
+        return true
+      }
+      return false
     } catch (error) {
       console.error(`Failed to save ${key}:`, error)
       return false
