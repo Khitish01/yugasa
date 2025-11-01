@@ -1,17 +1,32 @@
 "use client"
 
 import { useState } from 'react'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, Menu } from 'lucide-react'
 import { Logo } from '@/components/site/logo'
 
-export function AdminHeader() {
+interface AdminHeaderProps {
+  isSidebarCollapsed: boolean
+  onMobileMenuToggle: () => void
+}
+
+export function AdminHeader({ isSidebarCollapsed, onMobileMenuToggle }: AdminHeaderProps) {
   const [showDropdown, setShowDropdown] = useState(false)
 
   return (
-    <header className="bg-white border-b border-gray-200 h-16 fixed top-0 left-64 right-0 z-40">
-      <div className="flex items-center justify-between h-full px-6">
-        <Logo />
-        
+    <header className={`bg-white border-b border-gray-200 h-16 fixed top-0 left-0  ${isSidebarCollapsed?'lg:left-20':'lg:left-64'} right-0 z-30 transition-all duration-300`}>
+      <div className="flex items-center justify-between h-full px-4 md:px-6">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={onMobileMenuToggle}
+          className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+
+        <div className="hidden lg:block">
+          <Logo />
+        </div>
+
         <div className="relative">
           <button
             onClick={() => setShowDropdown(!showDropdown)}
@@ -22,7 +37,7 @@ export function AdminHeader() {
             </div>
             <span className="text-sm text-gray-700">Admin</span>
           </button>
-          
+
           {showDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200">
               <button

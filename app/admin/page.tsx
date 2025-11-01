@@ -42,6 +42,8 @@ export default function AdminPage() {
   const [showServiceForm, setShowServiceForm] = useState(false)
   const [editingService, setEditingService] = useState<Service | undefined>()
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   const renderContent = () => {
     switch (activeSection) {
@@ -107,10 +109,19 @@ export default function AdminPage() {
   return (
     <AuthGuard>
       <div className="flex min-h-screen bg-gray-100">
-        <AdminSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-        <AdminHeader />
+        <AdminSidebar 
+          activeSection={activeSection} 
+          onSectionChange={setActiveSection}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          isMobileOpen={isMobileSidebarOpen}
+          onMobileToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        />
+        <AdminHeader isSidebarCollapsed={isSidebarCollapsed} onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} />
         
-        <div className="flex-1 ml-64 pt-24 p-8">
+        <div className={`flex-1  p-4 md:p-8 pt-24 md:pt-24 transition-all duration-300 ${
+          isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'
+        }`}>
           {renderContent()}
           {showTestimonialForm && (
             <TestimonialForm
