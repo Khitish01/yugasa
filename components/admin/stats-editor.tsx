@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getContent, setContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { Button } from '@/components/ui/button'
 import { Plus, X } from 'lucide-react'
 import { useLoading } from '@/contexts/loading-context'
@@ -24,18 +24,9 @@ export function StatsEditor() {
     const loadStats = async () => {
       startLoading()
       try {
-        const stored = await getContent('stats-data')
-        if (stored) {
-          let parsedStats
-          try {
-            parsedStats = JSON.parse(stored)
-          } catch {
-            // If it's already an object/array, use it directly
-            parsedStats = stored
-          }
-          if (Array.isArray(parsedStats) && parsedStats.length > 0) {
-            setStats(parsedStats)
-          }
+        const data = await apiService.get<Stat[]>('stats-data')
+        if (data && Array.isArray(data) && data.length > 0) {
+          setStats(data)
         }
       } catch (e) {
         console.error('Failed to load stats:', e)
@@ -49,7 +40,7 @@ export function StatsEditor() {
 
   const saveStats = async (newStats: Stat[]) => {
     try {
-      const success = await setContent('stats-data', JSON.stringify(newStats))
+      const success = await apiService.set('stats-data', newStats)
       if (success) {
         setStats(newStats)
       } else {

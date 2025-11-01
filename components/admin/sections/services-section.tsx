@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { useLoading } from '@/contexts/loading-context'
 import { ServicesTable } from "@/components/admin/services-table"
 import { ServicesHeroEditor } from "@/components/admin/services-hero-editor"
@@ -32,21 +32,13 @@ export function ServicesSection({ onEdit, onAdd, refreshTrigger }: ServicesSecti
   const loadServices = async () => {
     startLoading()
     try {
-      const stored = await getContent('services-data')
-      if (stored) {
-        let parsedServices
-        try {
-          parsedServices = JSON.parse(stored)
-        } catch {
-          parsedServices = stored
-        }
-        if (Array.isArray(parsedServices)) {
-          const servicesWithIds = parsedServices.map((s, index) => ({
-            ...s,
-            id: s.id || `service-${index}`
-          }))
-          setServices(servicesWithIds)
-        }
+      const data = await apiService.get<Service[]>('services-data')
+      if (data && Array.isArray(data)) {
+        const servicesWithIds = data.map((s, index) => ({
+          ...s,
+          id: s.id || `service-${index}`
+        }))
+        setServices(servicesWithIds)
       }
     } catch (e) {
       console.error('Failed to load services:', e)

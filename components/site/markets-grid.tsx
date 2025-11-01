@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { FloatingParticles } from "@/components/ui/floating-particles"
+import { apiService } from "@/lib/api-service"
 
 export default function MarketsGrid() {
   const [markets, setMarkets] = useState([])
@@ -10,12 +11,9 @@ export default function MarketsGrid() {
   useEffect(() => {
     const loadMarkets = async () => {
       try {
-        const response = await fetch('/api/data?key=markets-data')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data && Array.isArray(result.data)) {
-            setMarkets(result.data)
-          }
+        const data = await apiService.get<any[]>('markets-data')
+        if (data && Array.isArray(data)) {
+          setMarkets(data)
         }
       } catch (e) {
         console.error('Failed to load markets data:', e)
@@ -25,16 +23,12 @@ export default function MarketsGrid() {
     loadMarkets()
 
     const handleStorageChange = () => {
+      apiService.clearCache('markets-data')
       loadMarkets()
     }
 
-    window.addEventListener('storage', handleStorageChange)
     window.addEventListener('marketsUpdated', handleStorageChange)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('marketsUpdated', handleStorageChange)
-    }
+    return () => window.removeEventListener('marketsUpdated', handleStorageChange)
   }, [])
 
   return (

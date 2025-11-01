@@ -90,7 +90,7 @@ export default function HomePage() {
       <MarketsGrid />
 
       {/* Featured projects on a dark section with white cards */}
-      <ProjectsFeatured />
+      {/* <ProjectsFeatured /> */}
 
 
 

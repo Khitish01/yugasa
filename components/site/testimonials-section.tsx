@@ -18,8 +18,16 @@ interface Testimonial {
 
 export default function TestimonialsSection() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
-  const [currentIndex, setCurrentIndex] = useState(1) // Start at 1 to show first testimonial in center
+  const [currentIndex, setCurrentIndex] = useState(1)
   const [isResetting, setIsResetting] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
   
   // Simple single testimonial display
 
@@ -67,7 +75,7 @@ export default function TestimonialsSection() {
     }
   }, [currentIndex, testimonials.length])
   return (
-    <section className="relative py-16 md:py-24 bg-background overflow-hidden">
+    <section className="section-dark relative py-16 md:py-24 overflow-hidden">
       <FloatingParticles count={10} />
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
@@ -77,9 +85,9 @@ export default function TestimonialsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <p className="eyebrow">TESTIMONIALS</p>
-          <h2 className="mt-3 text-3xl md:text-4xl font-semibold">What Our Clients Say</h2>
-          <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+          <p className="eyebrow text-white/70">TESTIMONIALS</p>
+          <h2 className="mt-3 text-3xl md:text-4xl font-semibold text-white">What Our Clients Say</h2>
+          <p className="mt-4 text-white/70 max-w-2xl mx-auto">
             Don't just take our word for it. Here's what our satisfied clients have to say about their experience with Yugasa Builders.
           </p>
         </motion.div>
@@ -88,29 +96,28 @@ export default function TestimonialsSection() {
           <div className="py-8">
             <motion.div
               className="flex"
-              animate={{ x: `-${currentIndex * 33.333}%` }}
+              animate={{ x: `-${currentIndex * (isMobile ? 100 : 33.333)}%` }}
               transition={{ 
                 duration: isResetting ? 0 : 0.8, 
                 ease: "easeInOut" 
               }}
             >
               {[...testimonials, ...testimonials, ...testimonials].map((testimonial, index) => {
-                // Calculate which testimonial is in the center position (middle of 3 visible items)
-                const centerPosition = currentIndex + 1 // The center item in the visible trio
-                const isCenter = index === centerPosition
+                const centerPosition = currentIndex + 1
+                const isCenter = isMobile ? index === currentIndex : index === centerPosition
                 
                 return (
-                  <div key={index} className="w-1/3 shrink-0 px-4">
+                  <div key={index} className={isMobile ? "w-full shrink-0 px-4" : "w-1/3 shrink-0 px-4"}>
                     <motion.div
-                      className="bg-card border rounded-xl p-6 h-full"
+                      className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 h-full"
                       animate={{
                         scale: isCenter ? 1.05 : 0.95,
                         opacity: isCenter ? 1 : 0.7
                       }}
                       transition={{ duration: 0.5, ease: "easeOut" }}
                     >
-                      <Quote className={`text-primary/20 mb-4 ${
-                        isCenter ? 'w-10 h-10 mx-auto' : 'w-8 h-8'
+                      <Quote className={` mb-4 ${
+                        isCenter ? 'w-10 h-10 mx-auto text-white' : 'w-8 h-8 text-white/20'
                       }`} />
                       
                       <div className={`flex mb-4 ${
@@ -121,7 +128,7 @@ export default function TestimonialsSection() {
                         ))}
                       </div>
 
-                      <p className={`text-muted-foreground mb-6 leading-relaxed ${
+                      <p className={`text-white/80 mb-6 leading-relaxed ${
                         isCenter ? 'text-center text-base' : 'text-sm'
                       }`}>
                         "{testimonial.content}"
@@ -138,10 +145,10 @@ export default function TestimonialsSection() {
                           height={isCenter ? 56 : 48}
                         />
                         <div className={isCenter ? 'text-center' : ''}>
-                          <h4 className={`font-semibold ${
+                          <h4 className={`font-semibold text-white ${
                             isCenter ? 'text-lg' : 'text-base'
                           }`}>{testimonial.name}</h4>
-                          <p className={`text-muted-foreground ${
+                          <p className={`text-white/70 ${
                             isCenter ? '' : 'text-sm'
                           }`}>{testimonial.role}</p>
                         </div>
@@ -160,7 +167,7 @@ export default function TestimonialsSection() {
                   key={index}
                   onClick={() => setCurrentIndex(index + 1)}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    (currentIndex - 1) % testimonials.length === index ? 'bg-primary' : 'bg-primary/30'
+                    (currentIndex - 1) % testimonials.length === index ? 'bg-white' : 'bg-white/30'
                   }`}
                 />
               ))}

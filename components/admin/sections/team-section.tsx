@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { apiService } from '@/lib/api-service'
 import { useLoading } from '@/contexts/loading-context'
 import { TeamHeroEditor } from "@/components/admin/team-hero-editor"
 import { LeadershipEditor } from "@/components/admin/leadership-editor"
@@ -48,12 +49,9 @@ export function TeamSection() {
   const loadTeam = async () => {
     startLoading()
     try {
-      const response = await fetch('/api/data?key=team-members')
-      if (response.ok) {
-        const result = await response.json()
-        if (result.data && Array.isArray(result.data)) {
-          setTeam(result.data)
-        }
+      const data = await apiService.get<TeamMember[]>('team-members')
+      if (data && Array.isArray(data)) {
+        setTeam(data)
       }
     } catch (e) {
       console.error('Failed to load team data:', e)

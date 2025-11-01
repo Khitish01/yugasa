@@ -24,6 +24,18 @@ const contactInfoSchema = new mongoose.Schema({
     note: { type: String }
   },
   mapUrl: { type: String },
+  socialMedia: {
+    twitter: { type: String },
+    instagram: { type: String },
+    facebook: { type: String },
+    linkedin: { type: String },
+    youtube: { type: String }
+  },
+  companyInfo: {
+    tagline: { type: String },
+    director: { type: String },
+    architect: { type: String }
+  },
   updatedAt: { type: Date, default: Date.now }
 })
 

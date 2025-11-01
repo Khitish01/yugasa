@@ -7,7 +7,7 @@ const VALID_KEYS = [
   'leadership-team', 'team-members', 'news-data', 'services-data', 'testimonials-data',
   'portfolio-data', 'projects-data', 'markets-data', 'hero-background', 'hero-subtitle',
   'hero-description', 'services-hero-bg', 'portfolio-hero-bg', 'news-hero-background',
-  'team-hero-bg', 'typewriter-texts', 'stats-data', 'social-links'
+  'team-hero-bg', 'typewriter-texts', 'stats-data', 'social-links', 'contact-hero-bg', 'careers-hero-bg'
 ]
 
 // In-memory cache (infinite until invalidated)
@@ -18,6 +18,9 @@ function validateKey(key: string) {
 }
 
 async function getCached(key: string) {
+  // memoryCache.forEach((d) => {
+  //   memoryCache.delete(d.data)
+  // }); // --- IGNORE ---
   const item = memoryCache.get(key)
   if (item) return item.data
   const data = await databaseService.get(key)
@@ -71,11 +74,13 @@ export async function POST(request: NextRequest) {
     }
 
     const success = await databaseService.set(key, data)
+    console.log(success);
+
 
     if (success) {
       // Clear cache for this key
       memoryCache.delete(key)
-      
+
       // Return updated data immediately
       return NextResponse.json({ success: true, data })
     } else {

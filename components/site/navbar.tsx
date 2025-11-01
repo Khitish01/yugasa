@@ -35,7 +35,7 @@ export function SiteNav() {
     <>
       <motion.nav
         className={cn(
-          "top-0 left-0 right-0 z-[1000]",
+          "top-0 left-0 right-0 z-1000",
           isScrolled ? "fixed mx-3 my-2" : "relative"
         )}
         animate={{
@@ -70,29 +70,16 @@ export function SiteNav() {
             {/* Desktop Menu */}
             <div className="hidden lg:flex items-center gap-8">
               {mainNavLinks.map((l) => (
-                <motion.div
+                <div
                   key={l.href}
-                  className="relative group cursor-pointer py-2"
+                  className="relative group cursor-pointer py-2 pb-1"
                   onClick={() => router.push(l.href)}
-                  whileHover={{
-                    y: -2,
-                    transition: { duration: 0.2, ease: "easeOut" }
-                  }}
-                  whileTap={{ scale: 0.95 }}
                 >
                   <span className={`text-sm font-medium group-hover:text-primary transition-colors duration-200 tracking-wide ${isScrolled ? 'text-black' : 'text-gray-600 '} `}>
                     {l.label}
                   </span>
-                  <motion.div
-                    className="absolute bottom-0 left-0 h-0.5"
-                    style={{ backgroundColor: '#122640' }}
-                    initial={{ width: 0 }}
-                    whileHover={{
-                      width: "100%",
-                      transition: { duration: 0.3, ease: "easeOut" }
-                    }}
-                  />
-                </motion.div>
+                  <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-[#122640] group-hover:w-full transition-all duration-300 ease-out" />
+                </div>
               ))}
 
               <button className="bg-gray-900 text-white px-6 py-3 hover:bg-gray-800 transition-colors flex text-sm items-center gap-2 cursor-pointer" onClick={() => router.push('/contact')}>

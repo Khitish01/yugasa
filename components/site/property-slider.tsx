@@ -4,24 +4,34 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Calendar, Building } from "lucide-react"
-import { getContent } from "@/lib/admin"
+import { apiService } from "@/lib/api-service"
 import { portfolioProjects } from "@/lib/portfolio-data"
 import { useRouter } from "next/navigation"
 
+interface Project {
+  id: string
+  title: string
+  location: string
+  year: string
+  units: string
+  description: string
+  category: string
+  status: string
+  image: string
+  featured?: boolean
+}
+
 export default function PropertySlider() {
   const router = useRouter()
-  const [featuredProjects, setFeaturedProjects] = useState(portfolioProjects.filter(p => p.featured))
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>(portfolioProjects.filter((p: any) => p.featured))
   const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
     const loadProjects = async () => {
       try {
-        const response = await fetch('/api/data?key=portfolio-data')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data && Array.isArray(result.data)) {
-            setFeaturedProjects(result.data.filter(p => p.featured))
-          }
+        const data = await apiService.get<Project[]>('portfolio-data')
+        if (data && Array.isArray(data)) {
+          setFeaturedProjects(data.filter((p: Project) => p.featured))
         }
       } catch (e) {
         console.error('Failed to load projects:', e)
@@ -31,16 +41,12 @@ export default function PropertySlider() {
     loadProjects()
 
     const handleStorageChange = () => {
+      apiService.clearCache('portfolio-data')
       loadProjects()
     }
 
-    window.addEventListener('storage', handleStorageChange)
     window.addEventListener('projectsUpdated', handleStorageChange)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('projectsUpdated', handleStorageChange)
-    }
+    return () => window.removeEventListener('projectsUpdated', handleStorageChange)
   }, [])
 
   useEffect(() => {
@@ -55,7 +61,7 @@ export default function PropertySlider() {
 
   return (
     <section className="py-16 bg-gray-50">
-      <div className=" mx-auto px-4">
+      <div className=" mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-semibold mb-4">Featured Properties</h2>
           <p className="text-muted-foreground">Discover our premium collection of properties</p>
@@ -90,7 +96,7 @@ export default function PropertySlider() {
                 </Badge>
 
                 {/* Description Overlay - Top Right */}
-                <div className="absolute top-6 right-6 bottom-6 w-80 p-6 flex flex-col justify-between">
+                <div className="absolute top-6 right-6 bottom-6 w-80 p-8 flex flex-col justify-between">
                   <div>
                     <h3 className="text-2xl font-semibold mb-2 text-white drop-shadow-lg">{featuredProjects[currentIndex]?.title}</h3>
                     <div className="flex items-center text-white/90 mb-4">

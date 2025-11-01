@@ -7,17 +7,26 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Calendar, User, ArrowRight, Clock, Search, Filter, TrendingUp, Award, Building, Lightbulb } from "lucide-react"
-import { getContent } from "@/lib/admin"
+import { apiService } from "@/lib/api-service"
 import { newsItems as defaultNewsItems } from "@/lib/news-data"
 import { useRouter } from "next/navigation"
 
-
-
-
+interface NewsItem {
+  id: string
+  title: string
+  excerpt: string
+  category: string
+  date: string
+  author: string
+  readTime: string
+  image: string
+  tags: string[]
+  featured?: boolean
+}
 
 export default function NewsPage() {
   const router = useRouter()
-  const [allNews, setAllNews] = useState(defaultNewsItems)
+  const [allNews, setAllNews] = useState<NewsItem[]>(defaultNewsItems)
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [heroBackground, setHeroBackground] = useState("/news/news-2.png")
@@ -31,48 +40,39 @@ export default function NewsPage() {
   ]
 
   useEffect(() => {
-    const loadNews = async () => {
+    const loadContent = async () => {
       try {
-        const response = await fetch('/api/data?key=news-data')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data && Array.isArray(result.data)) {
-            setAllNews(result.data)
-          }
+        const data = await apiService.getBatch<string | NewsItem[]>([
+          'news-data',
+          'news-hero-background'
+        ])
+
+        const newsData = data['news-data'] as NewsItem[]
+        const heroBg = data['news-hero-background'] as string
+
+        if (newsData && Array.isArray(newsData)) {
+          setAllNews(newsData)
+        }
+        if (heroBg) {
+          setHeroBackground(heroBg)
         }
       } catch (e) {
         console.error('Failed to load news data:', e)
       }
     }
 
-    const loadHeroBackground = async () => {
-      try {
-        const response = await fetch('/api/data?key=news-hero-background')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data) {
-            setHeroBackground(result.data)
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load hero background:', e)
-      }
-    }
-
-    loadNews()
-    loadHeroBackground()
+    loadContent()
 
     const handleStorageChange = () => {
-      loadNews()
-      loadHeroBackground()
+      apiService.clearCache('news-data')
+      apiService.clearCache('news-hero-background')
+      loadContent()
     }
 
-    window.addEventListener('storage', handleStorageChange)
     window.addEventListener('newsUpdated', handleStorageChange)
     window.addEventListener('newsHeroUpdated', handleStorageChange)
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('newsUpdated', handleStorageChange)
       window.removeEventListener('newsHeroUpdated', handleStorageChange)
     }
@@ -311,7 +311,7 @@ export default function NewsPage() {
         </div>
 
         {/* Newsletter Signup */}
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl p-8 lg:p-12 text-center">
+        {/* <div className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl p-8 lg:p-12 text-center">
           <div className="max-w-2xl mx-auto">
             <h3 className="text-3xl font-bold mb-4">Stay Ahead of the Curve</h3>
             <p className="text-muted-foreground mb-8 text-lg leading-relaxed">
@@ -332,7 +332,7 @@ export default function NewsPage() {
               No spam, unsubscribe anytime. Read our privacy policy.
             </p>
           </div>
-        </div>
+        </div> */}
       </SectionPage>
     </>
   )

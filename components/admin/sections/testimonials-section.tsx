@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { useLoading } from '@/contexts/loading-context'
 import { TestimonialsTable } from "@/components/admin/testimonials-table"
 
@@ -31,21 +31,13 @@ export function TestimonialsSection({ onEdit, onAdd, refreshTrigger }: Testimoni
   const loadTestimonials = async () => {
     startLoading()
     try {
-      const stored = await getContent('testimonials-data')
-      if (stored) {
-        let parsedTestimonials
-        try {
-          parsedTestimonials = JSON.parse(stored)
-        } catch {
-          parsedTestimonials = stored
-        }
-        if (Array.isArray(parsedTestimonials)) {
-          const testimonialsWithIds = parsedTestimonials.map((t, index) => ({
-            ...t,
-            id: t.id || `testimonial-${index}`
-          }))
-          setTestimonials(testimonialsWithIds)
-        }
+      const data = await apiService.get<Testimonial[]>('testimonials-data')
+      if (data && Array.isArray(data)) {
+        const testimonialsWithIds = data.map((t, index) => ({
+          ...t,
+          id: t.id || `testimonial-${index}`
+        }))
+        setTestimonials(testimonialsWithIds)
       }
     } catch (e) {
       console.error('Failed to load testimonials:', e)

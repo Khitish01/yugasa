@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getContent, setContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { Button } from '@/components/ui/button'
 import { X, Plus } from 'lucide-react'
 import { useLoading } from '@/contexts/loading-context'
@@ -14,18 +14,9 @@ export function TypewriterEditor() {
     const loadWords = async () => {
       startLoading()
       try {
-        const stored = await getContent('typewriter-texts')
-        if (stored) {
-          let parsedWords
-          try {
-            parsedWords = JSON.parse(stored)
-          } catch {
-            // If it's already an array, use it directly
-            parsedWords = stored
-          }
-          if (Array.isArray(parsedWords) && parsedWords.length > 0) {
-            setWords(parsedWords)
-          }
+        const data = await apiService.get<string[]>('typewriter-texts')
+        if (data && Array.isArray(data) && data.length > 0) {
+          setWords(data)
         }
       } catch (e) {
         console.error('Failed to load words:', e)
@@ -39,7 +30,7 @@ export function TypewriterEditor() {
 
   const saveWords = async (newWords: string[]) => {
     try {
-      const success = await setContent('typewriter-texts', JSON.stringify(newWords))
+      const success = await apiService.set('typewriter-texts', newWords)
       if (success) {
         setWords(newWords)
       } else {

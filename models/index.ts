@@ -96,13 +96,13 @@ const settingsSchema = new mongoose.Schema({
     label: String,
     value: Number,
     suffix: String
-  }],
-  heroBackgrounds: {
-    services: String, // Base64 data URL
-    portfolio: String, // Base64 data URL
-    news: String, // Base64 data URL
-    team: String // Base64 data URL
-  }
+  }]
+}, { timestamps: true })
+
+// Hero Backgrounds Model - Separate collection for large images
+const heroBackgroundSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true },
+  image: String // Base64 data URL
 }, { timestamps: true })
 
 // Export models with client-side safety
@@ -113,3 +113,4 @@ export const Testimonials = mongoose.models?.Testimonials || (typeof window === 
 export const Markets = mongoose.models?.Markets || (typeof window === 'undefined' ? mongoose.model('Markets', marketsSchema) : null)
 export const Team = mongoose.models?.Team || (typeof window === 'undefined' ? mongoose.model('Team', teamSchema) : null)
 export const Settings = mongoose.models?.Settings || (typeof window === 'undefined' ? mongoose.model('Settings', settingsSchema) : null)
+export const HeroBackground = mongoose.models?.HeroBackground || (typeof window === 'undefined' ? mongoose.model('HeroBackground', heroBackgroundSchema) : null)

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { getContent, setContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { Button } from '@/components/ui/button'
 import { Upload } from 'lucide-react'
 import { useLoading } from '@/contexts/loading-context'
@@ -16,9 +16,9 @@ export function BackgroundEditor() {
     const loadBackground = async () => {
       startLoading()
       try {
-        const stored = await getContent('hero-background')
-        if (stored) {
-          setBgImage(stored)
+        const data = await apiService.get<string>('hero-background')
+        if (data) {
+          setBgImage(data)
         }
       } catch (error) {
         console.error('Failed to load background:', error)
@@ -32,7 +32,7 @@ export function BackgroundEditor() {
 
   const handleImageChange = async (newImage: string) => {
     try {
-      await setContent('hero-background', newImage)
+      await apiService.set('hero-background', newImage)
       setBgImage(newImage)
     } catch (error) {
       console.error('Failed to save background:', error)

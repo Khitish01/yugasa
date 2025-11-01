@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Phone, Mail, MapPin, Clock, MessageCircle } from "lucide-react"
 import { useEffect, useState } from "react"
+import { apiService } from "@/lib/api-service"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -16,28 +17,37 @@ export default function ContactPage() {
     businessHours: { weekdays: "", saturday: "", sunday: "", note: "" },
     mapUrl: ""
   })
+  const [heroImage, setHeroImage] = useState("/construction-site-luxury-lobby.jpg")
+  
   useEffect(() => {
-    fetchContactInfo()
-  }, [])
+    const fetchData = async () => {
+      try {
+        const [contactResponse, heroBg] = await Promise.all([
+          fetch('/api/contact-info'),
+          apiService.get<string>('contact-hero-bg')
+        ])
 
-  const fetchContactInfo = async () => {
-    try {
-      const response = await fetch('/api/contact-info')
-      const data = await response.json()
-      if (data.success) {
-        setFormData(data.contactInfo)
+        const contactData = await contactResponse.json()
+        if (contactData.success) {
+          setFormData(contactData.contactInfo)
+        }
+
+        if (heroBg) {
+          setHeroImage(heroBg)
+        }
+      } catch (error) {
+        console.error('Failed to fetch data:', error)
       }
-    } catch (error) {
-      console.error('Failed to fetch contact info:', error)
     }
-  }
+    fetchData()
+  }, [])
   return (
     <>
       <SectionHero
         eyebrow="Contact"
         title="Get In Touch"
         subtitle="Ready to start your construction project? We're here to help bring your vision to life."
-        imageSrc="/construction-site-luxury-lobby.jpg"
+        imageSrc={heroImage}
       />
 
       <SectionPage
@@ -46,100 +56,122 @@ export default function ContactPage() {
       >
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Contact Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Send us a message</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form
-                className="space-y-4"
-                onSubmit={async (e) => {
-                  e.preventDefault()
-                  const form = e.currentTarget
-                  const formData = new FormData(form)
-                  const data = {
-                    name: formData.get('name'),
-                    email: formData.get('email'),
-                    phone: formData.get('phone'),
-                    subject: `${formData.get('projectType')} - Budget: ${formData.get('budget') || 'Not specified'}`,
-                    message: formData.get('message')
-                  }
-                  try {
-                    await fetch("/api/contacts", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(data)
-                    })
-                    alert("Thanks! We received your enquiry and will respond within 24 hours.")
-                    form.reset()
-                  } catch {
-                    alert("Something went wrong. Please try again or call us directly.")
-                  }
-                }}
-              >
-                <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Send us a message</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  className="space-y-4"
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    const form = e.currentTarget
+                    const formData = new FormData(form)
+                    const data = {
+                      name: formData.get('name'),
+                      email: formData.get('email'),
+                      phone: formData.get('phone'),
+                      subject: `${formData.get('projectType')} - Budget: ${formData.get('budget') || 'Not specified'}`,
+                      message: formData.get('message')
+                    }
+                    try {
+                      await fetch("/api/contacts", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data)
+                      })
+                      alert("Thanks! We received your enquiry and will respond within 24 hours.")
+                      form.reset()
+                    } catch {
+                      alert("Something went wrong. Please try again or call us directly.")
+                    }
+                  }}
+                >
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <input
+                      name="name"
+                      required
+                      placeholder="Your Name"
+                      className="rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    />
+                    <input
+                      name="email"
+                      required
+                      type="email"
+                      placeholder="Email Address"
+                      className="rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <input
+                      name="phone"
+                      placeholder="Phone Number"
+                      className="rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    />
+                    <select
+                      name="projectType"
+                      className="rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    >
+                      <option value="">Project Type</option>
+                      <option value="residential">Residential</option>
+                      <option value="commercial">Commercial</option>
+                      <option value="redevelopment">Redevelopment</option>
+                      <option value="renovation">Renovation</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
                   <input
-                    name="name"
-                    required
-                    placeholder="Your Name"
-                    className="rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    name="budget"
+                    placeholder="Approximate Budget (Optional)"
+                    className="w-full rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                   />
-                  <input
-                    name="email"
-                    required
-                    type="email"
-                    placeholder="Email Address"
-                    className="rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+
+                  <textarea
+                    name="message"
+                    rows={4}
+                    placeholder="Tell us about your project requirements..."
+                    className="w-full rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
                   />
-                </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <input
-                    name="phone"
-                    placeholder="Phone Number"
-                    className="rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                  />
-                  <select
-                    name="projectType"
-                    className="rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                  >
-                    <option value="">Project Type</option>
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="redevelopment">Redevelopment</option>
-                    <option value="renovation">Renovation</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <input
-                  name="budget"
-                  placeholder="Approximate Budget (Optional)"
-                  className="w-full rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                />
-
-                <textarea
-                  name="message"
-                  rows={4}
-                  placeholder="Tell us about your project requirements..."
-                  className="w-full rounded-md border bg-background px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
-                />
-
-                <div className="flex gap-3">
-                  <Button type="submit" className="flex-1">
-                    Send Message
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <a href="tel:+910000000000">
-                      <Phone className="w-4 h-4 mr-2" />
-                      Call Now
-                    </a>
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
+                  <div className="flex gap-3">
+                    <Button type="submit" className="flex-1">
+                      Send Message
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <a href={`tel:+${formData.phones?.mainOffice?.replace(/\D/g, '') || ''}`}>
+                        <Phone className="w-4 h-4 mr-2" />
+                        Call Now
+                      </a>
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  Office Location
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="font-medium mb-2">Yugasa Builders Pvt. Ltd.</p>
+                <p className="text-muted-foreground mb-3">
+                  {formData?.address?.company}<br />
+                  {formData?.address?.street}<br />
+                  {formData?.address?.area}<br />
+                  {formData?.address?.city}<br />
+                  {formData?.address?.state}
+                </p>
+                <Button variant="outline" size="sm">
+                  Get Directions
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
           {/* Contact Information */}
           <div className="space-y-6">
             <Card>
@@ -198,28 +230,6 @@ export default function ContactPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  Office Location
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="font-medium mb-2">Yugasa Builders Pvt. Ltd.</p>
-                <p className="text-muted-foreground mb-3">
-                  {formData?.address?.company}<br />
-                  {formData?.address?.street}<br />
-                  {formData?.address?.area}<br />
-                  {formData?.address?.city}<br />
-                  {formData?.address?.state}
-                </p>
-                <Button variant="outline" size="sm">
-                  Get Directions
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-primary" />
                   Business Hours
                 </CardTitle>
@@ -272,7 +282,7 @@ export default function ContactPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
+        {/* <div className="mt-12 grid gap-4 md:grid-cols-3">
           <Card className="text-center p-6 hover:shadow-lg transition-shadow">
             <h3 className="font-semibold mb-2">Schedule Site Visit</h3>
             <p className="text-sm text-muted-foreground mb-4">
@@ -290,7 +300,7 @@ export default function ContactPage() {
             </p>
             <Button variant="outline" className="w-full" asChild>
               <p>Download Now</p>
-              {/* <a href="/downloads">Download Now</a> */}
+              // {/* <a href="/downloads">Download Now</a>
             </Button>
           </Card>
 
@@ -301,10 +311,10 @@ export default function ContactPage() {
             </p>
             <Button className="w-full" asChild>
               <p>Book Meeting</p>
-              {/* <a href="/book-meeting">Book Meeting</a> */}
+              <a href="/book-meeting">Book Meeting</a>
             </Button>
           </Card>
-        </div>
+        </div> */}
       </SectionPage>
     </>
   )

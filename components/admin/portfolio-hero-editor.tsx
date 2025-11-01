@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { getContent, setContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { Button } from '@/components/ui/button'
 import { Upload } from 'lucide-react'
 
@@ -13,12 +13,9 @@ export function PortfolioHeroEditor() {
   useEffect(() => {
     const loadCurrentImage = async () => {
       try {
-        const response = await fetch('/api/data?key=portfolio-hero-bg')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data) {
-            setImageSrc(result.data)
-          }
+        const data = await apiService.get<string>('portfolio-hero-bg')
+        if (data) {
+          setImageSrc(data)
         }
       } catch (error) {
         console.error('Failed to load current image:', error)
@@ -29,14 +26,12 @@ export function PortfolioHeroEditor() {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('/api/data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'portfolio-hero-bg', data: imageSrc })
-      })
-      if (response.ok) {
+      const success = await apiService.set('portfolio-hero-bg', imageSrc)
+      if (success) {
         window.dispatchEvent(new CustomEvent('portfolioHeroUpdated'))
         alert('Portfolio hero background updated successfully!')
+      } else {
+        alert('Failed to save background image')
       }
     } catch (error) {
       alert('Failed to save background image')

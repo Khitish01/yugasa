@@ -8,12 +8,19 @@ import ProcessSection from "@/components/site/process-section"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Award, Clock, Users } from "lucide-react"
-import { loadServices } from "@/lib/data-utils"
-import { getContent } from "@/lib/admin"
+import { apiService } from "@/lib/api-service"
+
+interface ServiceDetail {
+  title: string
+  description: string
+  features: string[]
+  image: string
+  detailedDescription?: string
+}
 
 export default function ServicesPage() {
   const [heroImageSrc, setHeroImageSrc] = useState<string | null>(null)
-  const [serviceDetails, setServiceDetails] = useState([
+  const [serviceDetails, setServiceDetails] = useState<ServiceDetail[]>([
     {
       title: "Residential Construction",
       description: "Complete residential construction services from planning to handover",
@@ -21,7 +28,7 @@ export default function ServicesPage() {
       image: "/modern-luxury-residence-exterior.jpg"
     },
     {
-      title: "Commercial Projects", 
+      title: "Commercial Projects",
       description: "Modern commercial spaces designed for business success",
       features: ["Office Buildings", "Retail Spaces", "Mixed-Use Developments", "Corporate Interiors"],
       image: "/commercial-building-glass.jpg"
@@ -38,8 +45,8 @@ export default function ServicesPage() {
     const loadContent = async () => {
       // Load services data
       try {
-        const services = await loadServices()
-        if (services.length > 0) {
+        const services = await apiService.get<ServiceDetail[]>('services-data')
+        if (services && services.length > 0) {
           setServiceDetails(services)
         }
       } catch (e) {
@@ -48,14 +55,9 @@ export default function ServicesPage() {
 
       // Load hero background
       try {
-        const response = await fetch('/api/data?key=services-hero-bg')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data) {
-            setHeroImageSrc(result.data)
-          } else {
-            setHeroImageSrc("/construction-site-cranes.png")
-          }
+        const heroBg = await apiService.get<string>('services-hero-bg')
+        if (heroBg) {
+          setHeroImageSrc(heroBg)
         } else {
           setHeroImageSrc("/construction-site-cranes.png")
         }
@@ -89,19 +91,32 @@ export default function ServicesPage() {
         subtitle="Comprehensive construction solutions tailored to your needs"
         imageSrc={heroImageSrc || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3Crect width='1' height='1' fill='%23f3f4f6'/%3E%3C/svg%3E"}
       />
-      
-      <SectionPage
+
+      {/* <SectionPage
         title="What We Offer"
         description="From concept to completion, we deliver exceptional construction services"
       >
-        <ServicesGrid />
-        
+
+      </SectionPage> */}
+      <section className="px-4 py-10 md:py-20">
+        <div className="container mx-auto ">
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-balance">What We Offer</h1>
+          <p className="mt-3 max-w-2xl text-muted-foreground text-pretty">From concept to completion, we deliver exceptional construction services</p>
+        </div>
+      </section>
+      <ServicesGrid />
+
+      <SectionPage
+        title=""
+      // description="From concept to completion, we deliver exceptional construction services"
+      >
+
         <div className="mt-16 mb-6 space-y-12">
           {serviceDetails.map((service, index) => (
             <div key={service.title} className={`grid lg:grid-cols-2 gap-8 items-center ${index % 2 === 1 ? 'lg:grid-flow-col-dense' : ''}`}>
               <div className={index % 2 === 1 ? 'lg:col-start-2' : ''}>
-                <img 
-                  src={service.image} 
+                <img
+                  src={service.image}
                   alt={service.title}
                   className="w-full h-64 object-cover rounded-lg"
                 />
@@ -121,10 +136,15 @@ export default function ServicesPage() {
             </div>
           ))}
         </div>
+      </SectionPage>
 
-        <ProcessSection />
+      <ProcessSection />
+      <SectionPage
+        title="What We Offer"
+        description="From concept to completion, we deliver exceptional construction services"
+      >
 
-        <div className="mt-16 grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           <Card className="text-center p-6">
             <Award className="w-12 h-12 text-primary mx-auto mb-4" />
             <h4 className="font-semibold mb-2">Quality Assured</h4>

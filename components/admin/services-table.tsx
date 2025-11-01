@@ -1,6 +1,6 @@
 "use client"
 
-import { setContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { Button } from '@/components/ui/button'
 import { Plus, Edit, Trash2, Building2, Home, Wrench, Users } from 'lucide-react'
 import { useLoading } from '@/contexts/loading-context'
@@ -38,7 +38,7 @@ export function ServicesTable({ services = [], onEdit, onAdd, onDataChange }: Se
       startLoading()
       try {
         const newServices = services.filter(s => s.id !== id)
-        const success = await setContent('services-data', JSON.stringify(newServices))
+        const success = await apiService.set('services-data', newServices)
         if (success) {
           window.dispatchEvent(new CustomEvent('servicesUpdated'))
           if (onDataChange) {

@@ -14,8 +14,15 @@ const iconMap = {
   'Users': Users
 }
 
+interface Service {
+  title: string
+  description: string
+  image: string
+  icon: string
+}
+
 export default function ServicesGrid() {
-  const [services, setServices] = useState([])
+  const [services, setServices] = useState<Service[]>([])
 
   useEffect(() => {
     const loadServicesData = async () => {
@@ -40,7 +47,7 @@ export default function ServicesGrid() {
     return () => window.removeEventListener('servicesUpdated', handleStorageChange)
   }, [])
   return (
-    <section className="relative bg-muted/30 py-10 md:py-20 overflow-hidden">
+    <section className="section-dark relative py-10 md:py-20 overflow-hidden">
       <FloatingParticles count={12} />
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
@@ -50,9 +57,9 @@ export default function ServicesGrid() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          {/* <p className="eyebrow">OUR SERVICES</p> */}
-          <h2 className="mt-3 text-3xl md:text-4xl font-semibold">OUR SERVICES</h2>
-          <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+          {/* <p className="eyebrow text-white/70">OUR SERVICES</p> */}
+          <h2 className="mt-3 text-3xl md:text-4xl font-semibold text-white">OUR SERVICES</h2>
+          <p className="mt-4 text-white/70 max-w-2xl mx-auto">
             From concept to completion, we deliver comprehensive construction solutions
             that exceed expectations and stand the test of time.
           </p>
@@ -66,7 +73,7 @@ export default function ServicesGrid() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group relative overflow-hidden rounded-xl bg-card border hover:shadow-lg transition-all duration-300"
+              className="group relative overflow-hidden rounded-xl bg-white backdrop-blur-md border border-white/20 hover:shadow-lg transition-all duration-300"
             >
               <div className="aspect-4/3 overflow-hidden">
                 <OptimizedImage
@@ -80,15 +87,15 @@ export default function ServicesGrid() {
               </div>
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
+                  <div className="p-2 rounded-lg ">
                     {(() => {
                       const IconComponent = iconMap[service.icon as keyof typeof iconMap] || Building2
-                      return <IconComponent className="w-5 h-5 text-primary" />
+                      return <IconComponent className="w-5 h-5 text-black" />
                     })()}
                   </div>
-                  <h3 className="font-semibold">{service.title}</h3>
+                  <h3 className="font-semibold text-black">{service.title}</h3>
                 </div>
-                <p className="text-sm text-muted-foreground">{service.description}</p>
+                <p className="text-sm text-black">{service.description}</p>
               </div>
             </motion.div>
           ))}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getContent, setContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { Button } from '@/components/ui/button'
 
 interface FormFieldProps {
@@ -19,8 +19,8 @@ export function FormField({ id, label, defaultValue, onSave, onCancel }: FormFie
   useEffect(() => {
     const loadValue = async () => {
       try {
-        const stored = await getContent(id)
-        const finalValue = stored || defaultValue
+        const data = await apiService.get<string>(id)
+        const finalValue = data || defaultValue
         setValue(finalValue)
         setOriginalValue(finalValue)
       } catch (error) {
@@ -35,7 +35,7 @@ export function FormField({ id, label, defaultValue, onSave, onCancel }: FormFie
 
   const handleSave = async () => {
     try {
-      await setContent(id, value)
+      await apiService.set(id, value)
       setOriginalValue(value)
       onSave()
     } catch (error) {

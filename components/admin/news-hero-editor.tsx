@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload } from "lucide-react"
-import { setContent, getContent } from "@/lib/admin"
+import { apiService } from "@/lib/api-service"
 
 export function NewsHeroEditor() {
   const [imageSrc, setImageSrc] = useState("/news/news-2.png")
@@ -13,12 +13,9 @@ export function NewsHeroEditor() {
   useEffect(() => {
     const loadCurrentImage = async () => {
       try {
-        const response = await fetch('/api/data?key=news-hero-background')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data) {
-            setImageSrc(result.data)
-          }
+        const data = await apiService.get<string>('news-hero-background')
+        if (data) {
+          setImageSrc(data)
         }
       } catch (error) {
         console.error('Failed to load current image:', error)
@@ -29,14 +26,12 @@ export function NewsHeroEditor() {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('/api/data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'news-hero-background', data: imageSrc })
-      })
-      if (response.ok) {
+      const success = await apiService.set('news-hero-background', imageSrc)
+      if (success) {
         window.dispatchEvent(new CustomEvent('newsHeroUpdated'))
         alert('News hero background updated successfully!')
+      } else {
+        alert('Failed to save background image')
       }
     } catch (error) {
       alert('Failed to save background image')

@@ -1,6 +1,6 @@
 "use client"
 
-import { setContent } from '@/lib/admin'
+import { apiService } from '@/lib/api-service'
 import { Button } from '@/components/ui/button'
 import { Plus, Edit, Trash2, Star } from 'lucide-react'
 import { useLoading } from '@/contexts/loading-context'
@@ -31,7 +31,7 @@ export function TestimonialsTable({ testimonials = [], onEdit, onAdd, onDataChan
       startLoading()
       try {
         const newTestimonials = testimonials.filter(t => t.id !== id)
-        const success = await setContent('testimonials-data', JSON.stringify(newTestimonials))
+        const success = await apiService.set('testimonials-data', newTestimonials)
         if (success && onDataChange) {
           onDataChange()
         }

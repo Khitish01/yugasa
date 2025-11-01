@@ -7,7 +7,7 @@ import { Reveal } from "@/components/site/reveal"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Linkedin, Mail } from "lucide-react"
-import { getContent } from "@/lib/admin"
+import { apiService } from "@/lib/api-service"
 
 const leadership = [
   {
@@ -92,61 +92,45 @@ export default function TeamPage() {
 
   useEffect(() => {
     const loadTeamData = async () => {
-      // Load hero background
       try {
-        const response = await fetch('/api/data?key=team-hero-bg')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.data) {
-            setHeroBackground(result.data)
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load hero background:', e)
-      }
+        const data = await apiService.getBatch<string | any[]>([
+          'team-hero-bg',
+          'leadership-team',
+          'team-members'
+        ])
 
-      // Load leadership data
-      try {
-        const leadershipResponse = await fetch('/api/data?key=leadership-team')
-        if (leadershipResponse.ok) {
-          const leadershipResult = await leadershipResponse.json()
-          if (leadershipResult.data && Array.isArray(leadershipResult.data)) {
-            setLeadershipData(leadershipResult.data)
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load leadership data:', e)
-      }
+        const heroBg = data['team-hero-bg'] as string
+        const leadershipTeam = data['leadership-team'] as any[]
+        const teamMembers = data['team-members'] as any[]
 
-      // Load team data
-      try {
-        const teamResponse = await fetch('/api/data?key=team-members')
-        if (teamResponse.ok) {
-          const teamResult = await teamResponse.json()
-          if (teamResult.data && Array.isArray(teamResult.data)) {
-            setTeamData(teamResult.data)
-          }
+        if (heroBg) {
+          setHeroBackground(heroBg)
+        }
+        if (leadershipTeam && Array.isArray(leadershipTeam)) {
+          setLeadershipData(leadershipTeam)
+        }
+        if (teamMembers && Array.isArray(teamMembers)) {
+          setTeamData(teamMembers)
         }
       } catch (e) {
         console.error('Failed to load team data:', e)
       }
-
-
     }
 
     loadTeamData()
 
     const handleStorageChange = () => {
+      apiService.clearCache('team-hero-bg')
+      apiService.clearCache('leadership-team')
+      apiService.clearCache('team-members')
       loadTeamData()
     }
 
-    window.addEventListener('storage', handleStorageChange)
     window.addEventListener('teamHeroUpdated', handleStorageChange)
     window.addEventListener('leadershipUpdated', handleStorageChange)
     window.addEventListener('teamUpdated', handleStorageChange)
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('teamHeroUpdated', handleStorageChange)
       window.removeEventListener('leadershipUpdated', handleStorageChange)
       window.removeEventListener('teamUpdated', handleStorageChange)

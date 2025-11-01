@@ -1,20 +1,19 @@
-// Optimized API service with caching, debouncing, and batch operations
+// Optimized API service with infinite caching and batch operations
 class ApiService {
   private cache = new Map<string, { data: any; timestamp: number }>()
   private pendingRequests = new Map<string, Promise<any>>()
   private saveQueue = new Map<string, { data: any; timestamp: number }>()
   private saveTimer: NodeJS.Timeout | null = null
   
-  private readonly CACHE_TTL = 10 * 60 * 1000 // 10 minutes
   private readonly DEBOUNCE_DELAY = 300 // 300ms
   private readonly BATCH_SIZE = 10
 
-  // Get data with caching
+  // Get data with infinite caching (only invalidates on update)
   async get<T>(key: string, forceRefresh = false): Promise<T | null> {
-    // Check cache first
+    // Check cache first (infinite cache unless forceRefresh)
     if (!forceRefresh) {
       const cached = this.cache.get(key)
-      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      if (cached) {
         return cached.data
       }
     }
@@ -30,7 +29,7 @@ class ApiService {
 
     try {
       const data = await request
-      // Cache the result
+      // Cache the result indefinitely
       this.cache.set(key, { data, timestamp: Date.now() })
       return data
     } finally {
@@ -43,10 +42,10 @@ class ApiService {
     const results: Record<string, T | null> = {}
     const uncachedKeys: string[] = []
 
-    // Check cache for each key
+    // Check cache for each key (infinite cache)
     keys.forEach(key => {
       const cached = this.cache.get(key)
-      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      if (cached) {
         results[key] = cached.data
       } else {
         uncachedKeys.push(key)
@@ -170,8 +169,8 @@ class ApiService {
       })
       
       if (response.ok) {
-        // Clear local cache for this key to force fresh fetch
-        this.cache.delete(key)
+        // Update cache with new data instead of clearing
+        this.cache.set(key, { data, timestamp: Date.now() })
         return true
       }
       return false
