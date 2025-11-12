@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { DatabaseService } from '@/lib/database-service'
-import { revalidatePath } from 'next/cache'
 
 const databaseService = new DatabaseService()
 
@@ -13,18 +12,6 @@ const VALID_KEYS = [
 
 function validateKey(key: string) {
   return VALID_KEYS.includes(key)
-}
-
-// Simple in-memory cache with manual invalidation
-const cache = new Map<string, any>()
-
-async function getCached(key: string) {
-  if (cache.has(key)) {
-    return cache.get(key)
-  }
-  const data = await databaseService.get(key)
-  cache.set(key, data)
-  return data
 }
 
 export async function GET(request: NextRequest) {
@@ -41,12 +28,12 @@ export async function GET(request: NextRequest) {
     const results: Record<string, any> = {}
     await Promise.all(
       keyList.map(async (k) => {
-        results[k] = await getCached(k)
+        results[k] = await databaseService.get(k)
       })
     )
 
     return NextResponse.json({ data: results }, {
-      headers: { 'Cache-Control': 'public, max-age=600, stale-while-revalidate=86400' },
+      headers: { 'Cache-Control': 'no-store' },
     })
   }
 
@@ -55,9 +42,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const data = await getCached(key)
+    const data = await databaseService.get(key)
     return NextResponse.json({ data }, {
-      headers: { 'Cache-Control': 'public, max-age=600, stale-while-revalidate=86400' },
+      headers: { 'Cache-Control': 'no-store' },
     })
   } catch (e) {
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
@@ -75,18 +62,9 @@ export async function POST(request: NextRequest) {
     const success = await databaseService.set(key, data)
 
     if (success) {
-      // Clear cache for this key
-      cache.delete(key)
-      
-      // Revalidate all paths to ensure fresh data
-      try {
-        revalidatePath('/', 'layout')
-      } catch (e) {
-        // Ignore revalidation errors
-      }
-
-      // Return updated data immediately
-      return NextResponse.json({ success: true, data })
+      return NextResponse.json({ success: true, data }, {
+        headers: { 'Cache-Control': 'no-store' }
+      })
     } else {
       return NextResponse.json({ error: 'Failed to save data' }, { status: 500 })
     }

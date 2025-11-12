@@ -11,7 +11,7 @@ export function DataPreloader({ keys }: DataPreloaderProps) {
   useEffect(() => {
     const preloadData = async () => {
       try {
-        await apiService.preload(keys)
+        await Promise.all(keys.map(key => apiService.get(key)))
       } catch (error) {
         console.error('Failed to preload data:', error)
       }
