@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { DatabaseService } from '@/lib/database-service'
+import { revalidatePath } from 'next/cache'
 
 const databaseService = new DatabaseService()
 
@@ -10,21 +11,19 @@ const VALID_KEYS = [
   'team-hero-bg', 'typewriter-texts', 'stats-data', 'social-links', 'contact-hero-bg', 'careers-hero-bg'
 ]
 
-// In-memory cache (infinite until invalidated)
-const memoryCache = new Map<string, { data: any; ts: number }>()
-
 function validateKey(key: string) {
   return VALID_KEYS.includes(key)
 }
 
+// Simple in-memory cache with manual invalidation
+const cache = new Map<string, any>()
+
 async function getCached(key: string) {
-  // memoryCache.forEach((d) => {
-  //   memoryCache.delete(d.data)
-  // }); // --- IGNORE ---
-  const item = memoryCache.get(key)
-  if (item) return item.data
+  if (cache.has(key)) {
+    return cache.get(key)
+  }
   const data = await databaseService.get(key)
-  memoryCache.set(key, { data, ts: Date.now() })
+  cache.set(key, data)
   return data
 }
 
@@ -74,12 +73,17 @@ export async function POST(request: NextRequest) {
     }
 
     const success = await databaseService.set(key, data)
-    console.log(success);
-
 
     if (success) {
       // Clear cache for this key
-      memoryCache.delete(key)
+      cache.delete(key)
+      
+      // Revalidate all paths to ensure fresh data
+      try {
+        revalidatePath('/', 'layout')
+      } catch (e) {
+        // Ignore revalidation errors
+      }
 
       // Return updated data immediately
       return NextResponse.json({ success: true, data })
